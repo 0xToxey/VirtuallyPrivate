@@ -14,13 +14,19 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 import java.util.ArrayList;
+import java.util.List;
+import java.util.Locale;
 
 public class AppAdapter extends ArrayAdapter<AppInfo> {
     private Context m_context;
+    private List<AppInfo> appList;
+    private ArrayList<AppInfo> appArray;
 
     public AppAdapter(Context context, ArrayList<AppInfo> apps){
         super(context, 0, apps);
         this.m_context = context;
+        this.appList = apps;
+        this.appArray = new ArrayList<AppInfo>(apps);
     }
 
     @Override
@@ -53,5 +59,26 @@ public class AppAdapter extends ArrayAdapter<AppInfo> {
 
         // Return the completed view to render on screen
         return convertView;
+    }
+
+    public void filter (String text)
+    {
+        text = text.toLowerCase(Locale.getDefault());
+
+        appList.clear();
+
+        if (text.length() == 0)
+            appList.addAll(appArray);
+
+        else {
+               for (AppInfo app : appArray) {
+                   if (app.name.toLowerCase(Locale.getDefault()).startsWith(text))
+                   {
+                       appList.add(app);
+                   }
+               }
+        }
+
+        notifyDataSetChanged();
     }
 }

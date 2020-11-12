@@ -8,6 +8,7 @@ import android.content.pm.ResolveInfo;
 import android.graphics.drawable.Drawable;
 import android.icu.util.ULocale;
 import android.os.Bundle;
+import android.text.TextUtils;
 import android.util.Log;
 import android.util.Pair;
 import android.view.Menu;
@@ -77,7 +78,13 @@ public class MainActivity extends AppCompatActivity {
 
             @Override
             public boolean onQueryTextChange(String newText) {
-                appListAdapter.getFilter().filter(newText);
+                if (TextUtils.isEmpty(newText)) {
+                    appListAdapter.filter("");
+                }
+                else {
+                    appListAdapter.filter(newText);
+                }
+
                 return true;
             }
         });

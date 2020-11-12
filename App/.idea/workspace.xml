@@ -52,7 +52,11 @@
     <property name="RunOnceActivity.OpenProjectViewOnStart" value="true" />
     <property name="RunOnceActivity.ShowReadmeOnStart" value="true" />
     <property name="SHOW_ALL_PROCESSES" value="false" />
+    <property name="android-custom-viewC:/Users/nhhbe/AppData/Local/Android/Sdk/sources/android-30/android/widget/SearchView.java_SELECTED" value="SearchView" />
+    <property name="android-custom-viewC:/Users/nhhbe/AppData/Local/Android/Sdk/sources/android-30/android/widget/TextView.java_SELECTED" value="TextView" />
     <property name="android.sdk.path" value="$USER_HOME$/AppData/Local/Android/Sdk" />
+    <property name="multi-representation-previewC:/Users/nhhbe/AppData/Local/Android/Sdk/sources/android-30/android/widget/SearchView.java_selected" value="Custom views" />
+    <property name="multi-representation-previewC:/Users/nhhbe/AppData/Local/Android/Sdk/sources/android-30/android/widget/TextView.java_selected" value="Custom views" />
   </component>
   <component name="RunManager">
     <configuration default="true" type="AndroidJUnit" factoryName="Android JUnit">
@@ -162,41 +166,58 @@
       <screen x="0" y="0" width="1920" height="1040" />
     </state>
     <state width="438" height="466" key="DebuggerActiveHint/0.0.1920.1040/1920.0.1920.1040/-1080.-604.1080.1880@0.0.1920.1040" timestamp="1604606368441" />
-    <state width="1876" height="281" key="GridCell.Tab.0.bottom" timestamp="1605194097819">
+    <state width="1876" height="281" key="GridCell.Tab.0.bottom" timestamp="1605196521071">
       <screen x="0" y="0" width="1920" height="1040" />
     </state>
-    <state width="1876" height="281" key="GridCell.Tab.0.bottom/0.0.1920.1040/1920.0.1920.1040/-1080.-604.1080.1880@0.0.1920.1040" timestamp="1605194097819" />
-    <state width="1876" height="281" key="GridCell.Tab.0.center" timestamp="1605194097818">
+    <state width="1876" height="281" key="GridCell.Tab.0.bottom/0.0.1920.1040/1920.0.1920.1040/-1080.-604.1080.1880@0.0.1920.1040" timestamp="1605196521071" />
+    <state width="1876" height="281" key="GridCell.Tab.0.center" timestamp="1605196521071">
       <screen x="0" y="0" width="1920" height="1040" />
     </state>
-    <state width="1876" height="281" key="GridCell.Tab.0.center/0.0.1920.1040/1920.0.1920.1040/-1080.-604.1080.1880@0.0.1920.1040" timestamp="1605194097818" />
-    <state width="1876" height="281" key="GridCell.Tab.0.left" timestamp="1605194097818">
+    <state width="1876" height="281" key="GridCell.Tab.0.center/0.0.1920.1040/1920.0.1920.1040/-1080.-604.1080.1880@0.0.1920.1040" timestamp="1605196521071" />
+    <state width="1876" height="281" key="GridCell.Tab.0.left" timestamp="1605196521071">
       <screen x="0" y="0" width="1920" height="1040" />
     </state>
-    <state width="1876" height="281" key="GridCell.Tab.0.left/0.0.1920.1040/1920.0.1920.1040/-1080.-604.1080.1880@0.0.1920.1040" timestamp="1605194097818" />
-    <state width="1876" height="281" key="GridCell.Tab.0.right" timestamp="1605194097819">
+    <state width="1876" height="281" key="GridCell.Tab.0.left/0.0.1920.1040/1920.0.1920.1040/-1080.-604.1080.1880@0.0.1920.1040" timestamp="1605196521071" />
+    <state width="1876" height="281" key="GridCell.Tab.0.right" timestamp="1605196521071">
       <screen x="0" y="0" width="1920" height="1040" />
     </state>
-    <state width="1876" height="281" key="GridCell.Tab.0.right/0.0.1920.1040/1920.0.1920.1040/-1080.-604.1080.1880@0.0.1920.1040" timestamp="1605194097819" />
-    <state width="1877" height="281" key="GridCell.Tab.1.bottom" timestamp="1604609655547">
+    <state width="1876" height="281" key="GridCell.Tab.0.right/0.0.1920.1040/1920.0.1920.1040/-1080.-604.1080.1880@0.0.1920.1040" timestamp="1605196521071" />
+    <state width="1876" height="281" key="GridCell.Tab.1.bottom" timestamp="1605196544482">
       <screen x="0" y="0" width="1920" height="1040" />
     </state>
-    <state width="1877" height="281" key="GridCell.Tab.1.bottom/0.0.1920.1040/1920.0.1920.1040/-1080.-604.1080.1880@0.0.1920.1040" timestamp="1604609655547" />
-    <state width="1877" height="281" key="GridCell.Tab.1.center" timestamp="1604609655547">
+    <state width="1876" height="281" key="GridCell.Tab.1.bottom/0.0.1920.1040/1920.0.1920.1040/-1080.-604.1080.1880@0.0.1920.1040" timestamp="1605196544482" />
+    <state width="1876" height="281" key="GridCell.Tab.1.center" timestamp="1605196544482">
       <screen x="0" y="0" width="1920" height="1040" />
     </state>
-    <state width="1877" height="281" key="GridCell.Tab.1.center/0.0.1920.1040/1920.0.1920.1040/-1080.-604.1080.1880@0.0.1920.1040" timestamp="1604609655547" />
-    <state width="1877" height="281" key="GridCell.Tab.1.left" timestamp="1604609655547">
+    <state width="1876" height="281" key="GridCell.Tab.1.center/0.0.1920.1040/1920.0.1920.1040/-1080.-604.1080.1880@0.0.1920.1040" timestamp="1605196544482" />
+    <state width="1876" height="281" key="GridCell.Tab.1.left" timestamp="1605196544481">
       <screen x="0" y="0" width="1920" height="1040" />
     </state>
-    <state width="1877" height="281" key="GridCell.Tab.1.left/0.0.1920.1040/1920.0.1920.1040/-1080.-604.1080.1880@0.0.1920.1040" timestamp="1604609655547" />
-    <state width="1877" height="281" key="GridCell.Tab.1.right" timestamp="1604609655547">
+    <state width="1876" height="281" key="GridCell.Tab.1.left/0.0.1920.1040/1920.0.1920.1040/-1080.-604.1080.1880@0.0.1920.1040" timestamp="1605196544481" />
+    <state width="1876" height="281" key="GridCell.Tab.1.right" timestamp="1605196544482">
       <screen x="0" y="0" width="1920" height="1040" />
     </state>
-    <state width="1877" height="281" key="GridCell.Tab.1.right/0.0.1920.1040/1920.0.1920.1040/-1080.-604.1080.1880@0.0.1920.1040" timestamp="1604609655547" />
+    <state width="1876" height="281" key="GridCell.Tab.1.right/0.0.1920.1040/1920.0.1920.1040/-1080.-604.1080.1880@0.0.1920.1040" timestamp="1605196544482" />
     <state x="681" y="260" width="540" height="524" key="StructurePopup" timestamp="1604608782117">
       <screen x="0" y="0" width="1920" height="1040" />
     </state>
     <state x="681" y="260" width="540" height="524" key="StructurePopup/0.0.1920.1040/1920.0.1920.1040/-1080.-604.1080.1880@0.0.1920.1040" timestamp="1604608782117" />
+  </component>
+  <component name="XDebuggerManager">
+    <breakpoint-manager>
+      <breakpoints>
+        <line-breakpoint enabled="true" suspend="THREAD" type="java-method">
+          <url>file://$PROJECT_DIR$/app/src/main/java/com/virtuallyprivate/AppAdapter.java</url>
+          <line>63</line>
+          <properties class="com.virtuallyprivate.AppAdapter" method="filter" />
+          <option name="timeStamp" value="6" />
+        </line-breakpoint>
+      </breakpoints>
+    </breakpoint-manager>
+    <watches-manager>
+      <configuration name="app">
+        <watch expression="appList" language="JAVA" />
+      </configuration>
+    </watches-manager>
   </component>
 </project>

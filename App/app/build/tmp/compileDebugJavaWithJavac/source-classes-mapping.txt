@@ -1,10 +1,10 @@
+com/virtuallyprivate/AppInfo.java
+ com.virtuallyprivate.AppInfo
+com/virtuallyprivate/BuildConfig.java
+ com.virtuallyprivate.BuildConfig
 com/virtuallyprivate/AppAdapter.java
  com.virtuallyprivate.AppAdapter
  com.virtuallyprivate.AppAdapter$1
-com/virtuallyprivate/BuildConfig.java
- com.virtuallyprivate.BuildConfig
-com/virtuallyprivate/AppInfo.java
- com.virtuallyprivate.AppInfo
 com/virtuallyprivate/MainActivity.java
  com.virtuallyprivate.MainActivity
  com.virtuallyprivate.MainActivity$1
