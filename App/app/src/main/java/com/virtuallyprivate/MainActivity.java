@@ -8,6 +8,7 @@ import android.content.pm.ResolveInfo;
 import android.graphics.drawable.Drawable;
 import android.icu.util.ULocale;
 import android.os.Bundle;
+import android.text.TextUtils;
 import android.util.Log;
 import android.util.Pair;
 import android.view.Menu;
@@ -27,7 +28,7 @@ import java.util.Locale;
 public class MainActivity extends AppCompatActivity {
 
     ListView listview;
-    ArrayAdapter<String> arrayAdapter;
+    AppAdapter appListAdapter;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -35,29 +36,30 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
 
         listview = (ListView) findViewById(R.id.listview);
-        listview.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-            @Override
-            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-
-                // selected item
-                String selected = ((TextView) view.findViewById(android.R.id.text1)).getText().toString();
-                Toast toast = Toast.makeText(getApplicationContext(), selected, Toast.LENGTH_SHORT);
-                toast.show();
-            }
-        });
 
         Intent mainIntent = new Intent(Intent.ACTION_MAIN, null);
         mainIntent.addCategory(Intent.CATEGORY_LAUNCHER);
+
+        LoadApps();
+    }
+
+    /*Load the applications on user's phone*/
+    private void LoadApps() {
         List<ApplicationInfo> pkgAppsList = getPackageManager().getInstalledApplications(0);
 
-        final ArrayList<String> list = new ArrayList<String>();
+        final ArrayList<AppInfo> list = new ArrayList<AppInfo>();
 
         for (ApplicationInfo app: pkgAppsList) {
-            list.add((String) getPackageManager().getApplicationLabel(app));
+            // Check that it is only user-installed app.
+            if (!((app.flags & ApplicationInfo.FLAG_SYSTEM) != 0))
+            {
+                AppInfo info = new AppInfo((String) getPackageManager().getApplicationLabel(app), app);
+                list.add(info);
+            }
         }
 
-        arrayAdapter = new ArrayAdapter(this, android.R.layout.simple_list_item_1, list);
-        listview.setAdapter(arrayAdapter);
+        appListAdapter = new AppAdapter(this, list);
+        listview.setAdapter(appListAdapter);
     }
 
     @Override
@@ -76,7 +78,13 @@ public class MainActivity extends AppCompatActivity {
 
             @Override
             public boolean onQueryTextChange(String newText) {
-                arrayAdapter.getFilter().filter(newText);
+                if (TextUtils.isEmpty(newText)) {
+                    appListAdapter.filter("");
+                }
+                else {
+                    appListAdapter.filter(newText);
+                }
+
                 return true;
             }
         });
