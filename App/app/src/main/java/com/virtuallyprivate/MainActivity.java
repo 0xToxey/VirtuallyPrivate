@@ -53,7 +53,11 @@ public class MainActivity extends AppCompatActivity {
         final ArrayList<String> list = new ArrayList<String>();
 
         for (ApplicationInfo app: pkgAppsList) {
-            list.add((String) getPackageManager().getApplicationLabel(app));
+            // Check that it is only user-installed app.
+            if (!((app.flags & ApplicationInfo.FLAG_SYSTEM) != 0))
+            {
+                list.add((String) getPackageManager().getApplicationLabel(app));
+            }
         }
 
         arrayAdapter = new ArrayAdapter(this, android.R.layout.simple_list_item_1, list);
