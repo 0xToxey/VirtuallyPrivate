@@ -10,10 +10,13 @@ import android.icu.util.ULocale;
 import android.os.Bundle;
 import android.util.Log;
 import android.util.Pair;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
+import android.widget.SearchView;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -24,6 +27,7 @@ import java.util.Locale;
 public class MainActivity extends AppCompatActivity {
 
     ListView listview;
+    ArrayAdapter<String> arrayAdapter;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -52,8 +56,31 @@ public class MainActivity extends AppCompatActivity {
             list.add((String) getPackageManager().getApplicationLabel(app));
         }
 
-        final ArrayAdapter adapter = new ArrayAdapter(this,
-                android.R.layout.simple_list_item_1, list);
-        listview.setAdapter(adapter);
+        arrayAdapter = new ArrayAdapter(this, android.R.layout.simple_list_item_1, list);
+        listview.setAdapter(arrayAdapter);
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+
+        getMenuInflater().inflate(R.menu.search_bar, menu);
+        MenuItem menuItem = menu.findItem(R.id.search_icon);
+        SearchView searchView = (SearchView) menuItem.getActionView();
+        searchView.setQueryHint("Search..");
+
+        searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
+            @Override
+            public boolean onQueryTextSubmit(String query) {
+                return false;
+            }
+
+            @Override
+            public boolean onQueryTextChange(String newText) {
+                arrayAdapter.getFilter().filter(newText);
+                return true;
+            }
+        });
+
+        return super.onCreateOptionsMenu(menu);
     }
 }
