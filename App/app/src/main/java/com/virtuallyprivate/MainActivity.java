@@ -56,7 +56,9 @@ public class MainActivity extends AppCompatActivity {
             // Check that it is only user-installed app.
             if (!((app.flags & ApplicationInfo.FLAG_SYSTEM) != 0))
             {
-                list.add((String) getPackageManager().getApplicationLabel(app));
+                //list.add((String) getPackageManager().getApplicationLabel(app));
+                // Get packageName (package ID).
+                list.add((String) app.packageName);
             }
         }
 
