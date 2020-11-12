@@ -21,12 +21,14 @@ public class AppAdapter extends ArrayAdapter<AppInfo> {
     private Context m_context;
     private List<AppInfo> appList;
     private ArrayList<AppInfo> appArray;
+    private DatabaseManager dbManager;
 
-    public AppAdapter(Context context, ArrayList<AppInfo> apps){
+    public AppAdapter(Context context, ArrayList<AppInfo> apps, DatabaseManager dbManager){
         super(context, 0, apps);
         this.m_context = context;
         this.appList = apps;
         this.appArray = new ArrayList<AppInfo>(apps);
+        this.dbManager = dbManager;
     }
 
     @Override

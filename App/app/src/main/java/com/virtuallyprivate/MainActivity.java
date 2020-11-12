@@ -58,11 +58,11 @@ public class MainActivity extends AppCompatActivity {
         Intent mainIntent = new Intent(Intent.ACTION_MAIN, null);
         mainIntent.addCategory(Intent.CATEGORY_LAUNCHER);
 
-        LoadApps();
+        LoadApps(dbManager);
     }
 
     /*Load the applications on user's phone*/
-    private void LoadApps() {
+    private void LoadApps(DatabaseManager dbManager) {
         List<ApplicationInfo> pkgAppsList = getPackageManager().getInstalledApplications(0);
 
         final ArrayList<AppInfo> list = new ArrayList<AppInfo>();
@@ -76,7 +76,7 @@ public class MainActivity extends AppCompatActivity {
             }
         }
 
-        appListAdapter = new AppAdapter(this, list);
+        appListAdapter = new AppAdapter(this, list, dbManager);
         listview.setAdapter(appListAdapter);
     }
 

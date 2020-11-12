@@ -33,7 +33,7 @@ public class DatabaseManager extends SQLiteOpenHelper {
                 COLUMN_ID + " INTEGER PRIMARY KEY AUTOINCREMENT, " +
                 RESTRICTION_COLUMN_PACKAGE_ID + " TEXT NOT NULL, " +
                 RESTRICTION_COLUMN_PERMISSION_ID + " INTEGER NOT NULL, " +
-                "FOREIGN KEY(" + RESTRICTION_COLUMN_PERMISSION_ID + ") REFERENCES "+ PERMISSIONS_TABLE_NAME + "("+ COLUMN_ID + ")";
+                "FOREIGN KEY(" + RESTRICTION_COLUMN_PERMISSION_ID + ") REFERENCES "+ PERMISSIONS_TABLE_NAME + "("+ COLUMN_ID + "));";
         sqLiteDatabase.execSQL(createTableStatement);
     }
 
