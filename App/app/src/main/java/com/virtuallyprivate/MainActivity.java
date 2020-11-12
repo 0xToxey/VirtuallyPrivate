@@ -3,6 +3,7 @@ package com.virtuallyprivate;
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.ResolveInfo;
 import android.graphics.drawable.Drawable;
@@ -25,16 +26,34 @@ public class MainActivity extends AppCompatActivity {
 
     ListView listview;
 
+    protected void createAvailablePermissions() {
+        // if it is the first time the app ran, it saves the available permissions in the db.
+        final String PREFS_NAME = "VirtuallyPrivate";
+        SharedPreferences settings = getSharedPreferences(PREFS_NAME, 0);
+        if (settings.getBoolean("fresh_install", true)) {
+            DatabaseManager dbManager = new DatabaseManager(MainActivity.this);
+            // add permissions like this
+            dbManager.addPermission(new Permission( "permission_1"));
+            // record the fact that the app has been started at least once
+            settings.edit().putBoolean("fresh_install", false).commit();
+        }
+    }
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        createAvailablePermissions();
+        DatabaseManager dbManager = new DatabaseManager(MainActivity.this);
+
+        Permission p = new Permission("permission_1");
+
+        ArrayList<String> a = dbManager.getAvailablePermissions();
         listview = (ListView) findViewById(R.id.listview);
         listview.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-
                 // selected item
                 String selected = ((TextView) view.findViewById(android.R.id.text1)).getText().toString();
                 Toast toast = Toast.makeText(getApplicationContext(), selected, Toast.LENGTH_SHORT);
@@ -42,12 +61,9 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        Intent mainIntent = new Intent(Intent.ACTION_MAIN, null);
-        mainIntent.addCategory(Intent.CATEGORY_LAUNCHER);
         List<ApplicationInfo> pkgAppsList = getPackageManager().getInstalledApplications(0);
 
         final ArrayList<String> list = new ArrayList<String>();
-
         for (ApplicationInfo app: pkgAppsList) {
             list.add((String) getPackageManager().getApplicationLabel(app));
         }
