@@ -48,6 +48,12 @@ public class MainActivity extends AppCompatActivity {
 
         Intent mainIntent = new Intent(Intent.ACTION_MAIN, null);
         mainIntent.addCategory(Intent.CATEGORY_LAUNCHER);
+
+        LoadApps();
+    }
+
+    /*Load the applications on user's phone*/
+    private void LoadApps() {
         List<ApplicationInfo> pkgAppsList = getPackageManager().getInstalledApplications(0);
 
         final ArrayList<String> list = new ArrayList<String>();
