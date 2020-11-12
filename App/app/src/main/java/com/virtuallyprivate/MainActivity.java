@@ -5,29 +5,22 @@ import androidx.appcompat.app.AppCompatActivity;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.ApplicationInfo;
-import android.content.pm.ResolveInfo;
-import android.graphics.drawable.Drawable;
-import android.icu.util.ULocale;
 import android.os.Bundle;
 import android.text.TextUtils;
-import android.util.Log;
-import android.util.Pair;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.view.View;
-import android.widget.AdapterView;
-import android.widget.ArrayAdapter;
+import android.widget.ExpandableListAdapter;
+import android.widget.ExpandableListView;
 import android.widget.ListView;
 import android.widget.SearchView;
-import android.widget.TextView;
-import android.widget.Toast;
 
 import java.util.ArrayList;
-import java.util.List;
-import java.util.Locale;
+import java.util.HashMap;
+import java.util.Map;
 
 public class MainActivity extends AppCompatActivity {
 
+    ExpandableListView expandableListView;
     ListView listview;
     AppAdapter appListAdapter;
 
@@ -52,9 +45,7 @@ public class MainActivity extends AppCompatActivity {
         createAvailablePermissions();
         DatabaseManager dbManager = new DatabaseManager(MainActivity.this);
 
-        Permission p = new Permission("permission_1");
-
-        listview = (ListView) findViewById(R.id.listview);
+        expandableListView = (ExpandableListView) findViewById(R.id.listview);
         Intent mainIntent = new Intent(Intent.ACTION_MAIN, null);
         mainIntent.addCategory(Intent.CATEGORY_LAUNCHER);
 
@@ -63,21 +54,22 @@ public class MainActivity extends AppCompatActivity {
 
     /*Load the applications on user's phone*/
     private void LoadApps(DatabaseManager dbManager) {
-        List<ApplicationInfo> pkgAppsList = getPackageManager().getInstalledApplications(0);
+        final Map<AppInfo, ArrayList<String>> appsList = new HashMap<>();
+        final ArrayList<AppInfo> appArrayInfo = new ArrayList<>();
+        ArrayList<String> availablePermissions = dbManager.getAvailablePermissions();
 
-        final ArrayList<AppInfo> list = new ArrayList<AppInfo>();
-
-        for (ApplicationInfo app: pkgAppsList) {
+        for (ApplicationInfo app: getPackageManager().getInstalledApplications(0)) {
             // Check that it is only user-installed app.
             if (!((app.flags & ApplicationInfo.FLAG_SYSTEM) != 0))
             {
                 AppInfo info = new AppInfo((String) getPackageManager().getApplicationLabel(app), app);
-                list.add(info);
+                appsList.put(info, availablePermissions);
+                appArrayInfo.add(info);
             }
         }
 
-        appListAdapter = new AppAdapter(this, list, dbManager);
-        listview.setAdapter(appListAdapter);
+        appListAdapter = new AppAdapter(this, appsList,appArrayInfo, dbManager);
+        expandableListView.setAdapter(appListAdapter);
     }
 
     @Override
