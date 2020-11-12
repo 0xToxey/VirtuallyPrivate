@@ -1,10 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout
+    android:id="@+id/appView"
     xmlns:android="http://schemas.android.com/apk/res/android"
-    android:layout_width="match_parent"
+    android:layout_width="350sp"
     android:layout_height="wrap_content"
     android:orientation="horizontal"
-    android:gravity="center|start"
+    android:layout_gravity="center_horizontal"
+    android:gravity="center_vertical"
     android:padding="16dp">
 
     <ImageView
@@ -16,10 +18,11 @@
 
     <TextView
         android:id="@+id/appName"
-        android:text="AppName"
-        android:textSize="35sp"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:textColor="@color/TextApp"/>
+        android:autoSizeTextType="uniform"
+        android:autoSizeMaxTextSize="30sp"
+        android:layout_width="225sp"
+        android:layout_height="50sp"
+        android:textColor="@color/TextApp"
+        android:text="App Name"/>
 
 </LinearLayout>

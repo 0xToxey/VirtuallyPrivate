@@ -1658,6 +1658,7 @@ id animateToEnd
 id animateToStart
 id appImg
 id appName
+id appView
 id asConfigured
 id async
 id auto
