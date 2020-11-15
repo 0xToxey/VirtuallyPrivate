@@ -10,13 +10,13 @@
     android:padding="16dp">
 
     <TextView
-        android:id="@+id/restrictionName"
+        android:id="@+id/permissionName"
         android:autoSizeTextType="uniform"
         android:autoSizeMaxTextSize="30sp"
         android:layout_width="225sp"
         android:layout_height="50sp"
         android:textColor="@color/TextApp"
-        android:text="Restriction"/>
+        android:text="Permission"/>
 
     <CheckBox
         android:id="@+id/restrictionCheckbox"

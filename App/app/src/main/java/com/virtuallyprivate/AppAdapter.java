@@ -110,7 +110,7 @@ public class AppAdapter extends BaseExpandableListAdapter {
 
     @Override
     public View getChildView(int i, int i1, boolean b, View view, ViewGroup viewGroup) {
-        String restriction = getChild(i, i1);
+        String permission = getChild(i, i1);
 
         // Check if an existing view is being reused, otherwise inflate the view
         if(view == null) {
@@ -119,25 +119,28 @@ public class AppAdapter extends BaseExpandableListAdapter {
         }
 
         // Lookup view for data population
-        TextView restrictionName = view.findViewById(R.id.restrictionName);
+        TextView permissionName = view.findViewById(R.id.permissionName);
 
         // Populate the data into the template view using the data object
-        restrictionName.setText(restriction);
+        permissionName.setText(permission);
 
         // Set on click listener.
         CheckBox checkbox = view.findViewById(R.id.restrictionCheckbox);
-        restrictionName.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                // selected item
-                AppInfo selected = getGroup(i);
-                checkbox.setChecked(!checkbox.isChecked());
-
-                Toast.makeText(
-                    m_context,
-                    selected.info.packageName + " restricion: " + restriction,
-                    Toast.LENGTH_SHORT).show();
+        permissionName.setOnClickListener(v -> {
+            // selected item
+            AppInfo selected = getGroup(i);
+            Restriction userRestriction = new Restriction(selected.info.packageName, dbManager.getPermissionPrimaryKey(permission));
+            if(!checkbox.isChecked()) { // by the time the onClick listener is called, the check is reversed.
+                dbManager.addAppRestriction(userRestriction);
+            } else {
+                dbManager.deleteAppRestriction(userRestriction);
             }
+
+            checkbox.setChecked(!checkbox.isChecked());
+            Toast.makeText(
+                m_context,
+                selected.info.packageName + " blocked permission: " + permission,
+                Toast.LENGTH_SHORT).show();
         });
 
         // Return the completed view to render on screen
