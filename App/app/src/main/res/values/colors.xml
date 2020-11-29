@@ -10,4 +10,5 @@
 
     <color name="BlockApp">#494A4C</color>
     <color name="TextApp">#B5B1B1</color>
+    <color name="backgroundApp">#151616</color>
 </resources>
