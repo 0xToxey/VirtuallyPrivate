@@ -6,11 +6,15 @@ import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.util.Log;
+import android.util.Pair;
 
 import androidx.annotation.Nullable;
 
+import java.util.AbstractMap;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class DatabaseManager extends SQLiteOpenHelper {
     public static final String PERMISSIONS_TABLE_NAME = "PERMISSIONS";
@@ -20,8 +24,11 @@ public class DatabaseManager extends SQLiteOpenHelper {
     public static final String RESTRICTION_COLUMN_PACKAGE_ID = "PACKAGE_ID";
     public static final String RESTRICTION_COLUMN_PERMISSION_ID = "PERMISSION_ID";
 
+    private HashMap<String, Integer> m_permissions; // caching id-permissions.
+
     public DatabaseManager(@Nullable Context context) {
         super(context, "virtuallyPrivate.db", null, 1);
+        this.m_permissions = new HashMap<>();
     }
 
     @Override
@@ -70,7 +77,7 @@ public class DatabaseManager extends SQLiteOpenHelper {
         Log.d("VP", "Deleted: " + restriction.getPackageId() + " rows: " + rows);
     }
 
-    private int getPrimaryKey(String tableName, String selectionQuery) {
+    private int _getPrimaryKey(String tableName, String selectionQuery) {
         SQLiteDatabase db = this.getReadableDatabase();
 
         Cursor cursor = db.rawQuery("SELECT ID FROM " + tableName + " WHERE " + selectionQuery, null);
@@ -80,16 +87,21 @@ public class DatabaseManager extends SQLiteOpenHelper {
             cursor.close();
             return primaryKey;
         }
-
+        cursor.close();
         return -1;
     }
 
     public int getPermissionPrimaryKey(String permissionName) {
-        return this.getPrimaryKey(PERMISSIONS_TABLE_NAME, PERMISSIONS_COLUMN_NAME + "='" + permissionName + "'");
+        int permissionId = m_permissions.getOrDefault(permissionName, -1);
+        if(permissionId == -1) { // caching.
+            permissionId = this._getPrimaryKey(PERMISSIONS_TABLE_NAME, PERMISSIONS_COLUMN_NAME + "='" + permissionName + "'");
+            m_permissions.put(permissionName, permissionId);
+        }
+        return permissionId;
     }
 
     public int getRestrictionPrimaryKey(String packageId, int permissionId) {
-        return this.getPrimaryKey(RESTRICTIONS_TABLE_NAME,
+        return this._getPrimaryKey(RESTRICTIONS_TABLE_NAME,
                 RESTRICTION_COLUMN_PACKAGE_ID + "='" + packageId + "' AND " + RESTRICTION_COLUMN_PERMISSION_ID + "='" + permissionId + "'");
     }
 
@@ -113,5 +125,19 @@ public class DatabaseManager extends SQLiteOpenHelper {
         cursor.close();
 
         return permissions;
+    }
+    public boolean didUserRestrict(String permission, String packageId) {
+        boolean didRestrict = false;
+        SQLiteDatabase db = this.getReadableDatabase();
+
+        String selectionQuery = RESTRICTION_COLUMN_PERMISSION_ID + "=" + this.getPermissionPrimaryKey(permission) + " AND " + RESTRICTION_COLUMN_PACKAGE_ID + "='" + packageId + "' ";
+
+        Cursor cursor = db.rawQuery("SELECT ID FROM " + RESTRICTIONS_TABLE_NAME + " WHERE " + selectionQuery + " LIMIT 1", null);
+        while(cursor.moveToNext()) {
+            didRestrict = true;
+            break;
+        }
+        cursor.close();
+        return didRestrict;
     }
 }

@@ -1,6 +1,6 @@
 package com.virtuallyprivate;
 
-public class Permission {
+class Permission {
 
     private String name;
 

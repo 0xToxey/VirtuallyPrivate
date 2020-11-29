@@ -6,13 +6,9 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.ApplicationInfo;
 import android.os.Bundle;
-import android.text.TextUtils;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.widget.ExpandableListAdapter;
 import android.widget.ExpandableListView;
-import android.widget.ImageView;
-import android.widget.ListView;
 import android.widget.SearchView;
 
 import java.util.ArrayList;
@@ -21,8 +17,8 @@ import java.util.Map;
 
 public class MainActivity extends AppCompatActivity {
 
+    DatabaseManager dbManager;
     ExpandableListView expandableListView;
-    ListView listview;
     AppAdapter appListAdapter;
 
     protected void createAvailablePermissions() {
@@ -30,8 +26,7 @@ public class MainActivity extends AppCompatActivity {
         final String PREFS_NAME = "VirtuallyPrivate";
         SharedPreferences settings = getSharedPreferences(PREFS_NAME, 0);
         if (settings.getBoolean("fresh_install", true)) {
-            DatabaseManager dbManager = new DatabaseManager(MainActivity.this);
-            // add permissions like this
+            // add permissions like this.
             dbManager.addPermission(new Permission( "permission_1"));
             // record the fact that the app has been started at least once
             settings.edit().putBoolean("fresh_install", false).commit();
@@ -44,9 +39,9 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
 
         createAvailablePermissions();
-        DatabaseManager dbManager = new DatabaseManager(MainActivity.this);
+        this.dbManager = new DatabaseManager(MainActivity.this);
 
-        expandableListView = (ExpandableListView) findViewById(R.id.listview);
+        expandableListView = findViewById(R.id.listview);
         Intent mainIntent = new Intent(Intent.ACTION_MAIN, null);
         mainIntent.addCategory(Intent.CATEGORY_LAUNCHER);
 
@@ -59,6 +54,7 @@ public class MainActivity extends AppCompatActivity {
         final ArrayList<AppInfo> appArrayInfo = new ArrayList<>();
         ArrayList<String> availablePermissions = dbManager.getAvailablePermissions();
 
+
         for (ApplicationInfo app: getPackageManager().getInstalledApplications(0)) {
             // Check that it is only user-installed app.
             if (!((app.flags & ApplicationInfo.FLAG_SYSTEM) != 0))
@@ -68,7 +64,6 @@ public class MainActivity extends AppCompatActivity {
                 appArrayInfo.add(info);
             }
         }
-
         appListAdapter = new AppAdapter(this, appsList,appArrayInfo, dbManager);
         expandableListView.setAdapter(appListAdapter);
     }
@@ -90,13 +85,7 @@ public class MainActivity extends AppCompatActivity {
 
             @Override
             public boolean onQueryTextChange(String newText) {
-                if (TextUtils.isEmpty(newText)) {
-                    appListAdapter.filter("");
-                }
-                else {
-                    appListAdapter.filter(newText);
-                }
-
+                appListAdapter.filter(newText);
                 return true;
             }
         });

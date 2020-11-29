@@ -2,7 +2,7 @@ package com.virtuallyprivate;
 
 import android.content.pm.ApplicationInfo;
 
-public class AppInfo {
+class AppInfo {
     public  String name;
     public ApplicationInfo info;
 
