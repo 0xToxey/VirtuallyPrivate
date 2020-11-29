@@ -1,6 +1,6 @@
 package com.virtuallyprivate;
 
-public class Restriction {
+class Restriction {
 
     private String packageId;
     private int permissionId;
