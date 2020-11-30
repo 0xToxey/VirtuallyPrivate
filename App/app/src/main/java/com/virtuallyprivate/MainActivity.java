@@ -37,9 +37,9 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        this.dbManager = new DatabaseManager(MainActivity.this);
 
         createAvailablePermissions();
-        this.dbManager = new DatabaseManager(MainActivity.this);
 
         expandableListView = findViewById(R.id.listview);
         Intent mainIntent = new Intent(Intent.ACTION_MAIN, null);
