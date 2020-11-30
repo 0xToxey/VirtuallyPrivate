@@ -119,16 +119,15 @@ class AppAdapter extends BaseExpandableListAdapter {
         checkbox.setChecked(this.dbManager.didUserRestrict(permission, selectedApp.info.packageName));
 
         // Set on click listener.
-        permissionName.setOnClickListener(v -> {
+        checkbox.setOnClickListener(v -> {
             // selected item
             Restriction userRestriction = new Restriction(selectedApp.info.packageName, dbManager.getPermissionPrimaryKey(permission));
-            if(!checkbox.isChecked()) { // by the time the onClick listener is called, the check is reversed.
+            if(checkbox.isChecked()) { // by the time the onClick listener is called, the check is reversed.
                 dbManager.addAppRestriction(userRestriction);
             } else {
                 dbManager.deleteAppRestriction(userRestriction);
             }
 
-            checkbox.setChecked(!checkbox.isChecked());
             Toast.makeText(
                 m_context,
                     selectedApp.info.packageName + " blocked permission: " + permission,
