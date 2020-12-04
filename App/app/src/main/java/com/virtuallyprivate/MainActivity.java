@@ -50,7 +50,7 @@ public class MainActivity extends AppCompatActivity {
 
     /*Load the applications on user's phone*/
     private void LoadApps(DatabaseManager dbManager) {
-        final Map<AppInfo, ArrayList<String>> appsList = new HashMap<>();
+        final HashMap<AppInfo, ArrayList<String>> appsList = new HashMap<>();
         final ArrayList<AppInfo> appArrayInfo = new ArrayList<>();
         ArrayList<String> availablePermissions = dbManager.getAvailablePermissions();
 
