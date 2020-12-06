@@ -6,15 +6,11 @@ import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.util.Log;
-import android.util.Pair;
 
 import androidx.annotation.Nullable;
 
-import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 
 public class DatabaseManager extends SQLiteOpenHelper {
     public static final String PERMISSIONS_TABLE_NAME = "PERMISSIONS";

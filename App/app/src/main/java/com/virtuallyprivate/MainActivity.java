@@ -10,10 +10,12 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.ExpandableListView;
 import android.widget.SearchView;
+import android.widget.Toast;
 
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Map;
+
+import java.lang.System;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -37,6 +39,13 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        if (System.getProperty("vxp") == null) {
+            Toast.makeText(MainActivity.this, "Not running in VirtualXposed!",
+                    Toast.LENGTH_LONG).show();
+            //finish();
+        }
+
         this.dbManager = new DatabaseManager(MainActivity.this);
 
         createAvailablePermissions();
