@@ -29,7 +29,7 @@ public class MainActivity extends AppCompatActivity {
         SharedPreferences settings = getSharedPreferences(PREFS_NAME, 0);
         if (settings.getBoolean("fresh_install", true)) {
             // add permissions like this.
-            dbManager.addPermission(new Permission( "permission_1"));
+            dbManager.addPermission(new Permission("Clipboard"));
             // record the fact that the app has been started at least once
             settings.edit().putBoolean("fresh_install", false).commit();
         }
