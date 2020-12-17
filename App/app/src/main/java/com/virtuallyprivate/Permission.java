@@ -1,8 +1,10 @@
 package com.virtuallyprivate;
 
 interface Permissions{
-    public static final String CLIPBOARD = "Clipboard";
-    public static final String APP_LIST = "App list";
+    String CLIPBOARD = "Clipboard";
+    String APP_LIST = "App list";
+    String LOCATION = "Location";
+    String MIC = "Microphone";
 }
 
 class Permission {

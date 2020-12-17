@@ -31,6 +31,8 @@ public class MainActivity extends AppCompatActivity {
         if (settings.getBoolean("fresh_install", true)) {
             dbManager.addPermission(new Permission(Permissions.CLIPBOARD));
             dbManager.addPermission(new Permission(Permissions.APP_LIST));
+            dbManager.addPermission(new Permission(Permissions.LOCATION));
+            dbManager.addPermission(new Permission(Permissions.MIC));
             // record the fact that the app has been started at least once
             settings.edit().putBoolean("fresh_install", false).commit();
         }
