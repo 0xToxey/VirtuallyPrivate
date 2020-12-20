@@ -5,10 +5,9 @@ import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
+import android.os.Environment;
 import android.util.Log;
-
-import androidx.annotation.Nullable;
-
+import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
 
@@ -22,10 +21,19 @@ public class DatabaseManager extends SQLiteOpenHelper {
 
     private HashMap<String, Integer> m_permissions; // caching id-permissions.
 
-    public DatabaseManager(@Nullable Context context) {
-        super(context, "virtuallyPrivate.db", null, 1);
+    public DatabaseManager(Context context) {
+        super(context, Environment.getExternalStorageDirectory() + File.separator +
+                "virtuallyprivate" + File.separator +
+                "virtuallyPrivate.db", null, 1);
+
+//        super(context, Environment.getDataDirectory() + File.separator +
+//                "data" + File.separator +
+//                BuildConfig.APPLICATION_ID + File.separator +
+//                "virtuallyPrivate.db", null, 1);
+
         this.m_permissions = new HashMap<>();
     }
+
 
     @Override
     public void onCreate(SQLiteDatabase sqLiteDatabase) {

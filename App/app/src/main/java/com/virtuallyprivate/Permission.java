@@ -1,5 +1,12 @@
 package com.virtuallyprivate;
 
+interface Permissions{
+    String CLIPBOARD = "Clipboard";
+    String APP_LIST = "App list";
+    String LOCATION = "Location";
+    String MIC = "Microphone";
+}
+
 class Permission {
 
     private String name;

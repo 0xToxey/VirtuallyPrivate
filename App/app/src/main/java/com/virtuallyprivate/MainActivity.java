@@ -6,6 +6,7 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.ApplicationInfo;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.ExpandableListView;
@@ -28,8 +29,10 @@ public class MainActivity extends AppCompatActivity {
         final String PREFS_NAME = "VirtuallyPrivate";
         SharedPreferences settings = getSharedPreferences(PREFS_NAME, 0);
         if (settings.getBoolean("fresh_install", true)) {
-            // add permissions like this.
-            dbManager.addPermission(new Permission( "permission_1"));
+            dbManager.addPermission(new Permission(Permissions.CLIPBOARD));
+            dbManager.addPermission(new Permission(Permissions.APP_LIST));
+            dbManager.addPermission(new Permission(Permissions.LOCATION));
+            dbManager.addPermission(new Permission(Permissions.MIC));
             // record the fact that the app has been started at least once
             settings.edit().putBoolean("fresh_install", false).commit();
         }
@@ -44,17 +47,17 @@ public class MainActivity extends AppCompatActivity {
             Toast.makeText(MainActivity.this, "Not running in VirtualXposed!",
                     Toast.LENGTH_LONG).show();
             //finish();
+        } else {
+            this.dbManager = new DatabaseManager(MainActivity.this);
+
+            createAvailablePermissions();
+
+            expandableListView = findViewById(R.id.listview);
+            Intent mainIntent = new Intent(Intent.ACTION_MAIN, null);
+            mainIntent.addCategory(Intent.CATEGORY_LAUNCHER);
+
+            LoadApps(dbManager);
         }
-
-        this.dbManager = new DatabaseManager(MainActivity.this);
-
-        createAvailablePermissions();
-
-        expandableListView = findViewById(R.id.listview);
-        Intent mainIntent = new Intent(Intent.ACTION_MAIN, null);
-        mainIntent.addCategory(Intent.CATEGORY_LAUNCHER);
-
-        LoadApps(dbManager);
     }
 
     /*Load the applications on user's phone*/
