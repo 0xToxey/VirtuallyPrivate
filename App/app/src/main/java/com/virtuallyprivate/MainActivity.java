@@ -31,8 +31,11 @@ public class MainActivity extends AppCompatActivity {
         if (settings.getBoolean("fresh_install", true)) {
             dbManager.addPermission(new Permission(Permissions.CLIPBOARD));
             dbManager.addPermission(new Permission(Permissions.APP_LIST));
+            dbManager.addPermission(new Permission(Permissions.CAMERA));
+            dbManager.addPermission(new Permission(Permissions.MICROPHONE));
+            dbManager.addPermission(new Permission(Permissions.CONTACTS_LIST));
+            dbManager.addPermission(new Permission(Permissions.CALL_LOG));
             dbManager.addPermission(new Permission(Permissions.LOCATION));
-            dbManager.addPermission(new Permission(Permissions.MIC));
             // record the fact that the app has been started at least once
             settings.edit().putBoolean("fresh_install", false).commit();
         }
@@ -46,7 +49,7 @@ public class MainActivity extends AppCompatActivity {
         if (System.getProperty("vxp") == null) {
             Toast.makeText(MainActivity.this, "Not running in VirtualXposed!",
                     Toast.LENGTH_LONG).show();
-            //finish();
+            finish();
         } else {
             this.dbManager = new DatabaseManager(MainActivity.this);
 
