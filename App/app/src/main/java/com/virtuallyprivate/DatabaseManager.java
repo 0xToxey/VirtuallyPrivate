@@ -25,12 +25,6 @@ public class DatabaseManager extends SQLiteOpenHelper {
         super(context, Environment.getExternalStorageDirectory() + File.separator +
                 "virtuallyprivate" + File.separator +
                 "virtuallyPrivate.db", null, 1);
-
-//        super(context, Environment.getDataDirectory() + File.separator +
-//                "data" + File.separator +
-//                BuildConfig.APPLICATION_ID + File.separator +
-//                "virtuallyPrivate.db", null, 1);
-
         this.m_permissions = new HashMap<>();
     }
 
