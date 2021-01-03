@@ -3,6 +3,11 @@
     xmlns:app="http://schemas.android.com/apk/res-auto">
 
     <item
+        android:id="@+id/settings_button"
+        android:title=""
+        android:icon="@drawable/ic_baseline_settings_24"
+        app:showAsAction="always" />
+    <item
         android:id="@+id/search_icon"
         android:title="Search"
 

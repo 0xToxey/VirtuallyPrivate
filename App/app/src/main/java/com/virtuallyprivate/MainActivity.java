@@ -1,12 +1,12 @@
 package com.virtuallyprivate;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.ApplicationInfo;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.ExpandableListView;
@@ -19,15 +19,13 @@ import java.util.HashMap;
 import java.lang.System;
 
 public class MainActivity extends AppCompatActivity {
-
     DatabaseManager dbManager;
     ExpandableListView expandableListView;
     AppAdapter appListAdapter;
 
     protected void createAvailablePermissions() {
         // if it is the first time the app ran, it saves the available permissions in the db.
-        final String PREFS_NAME = "VirtuallyPrivate";
-        SharedPreferences settings = getSharedPreferences(PREFS_NAME, 0);
+        SharedPreferences settings = getSharedPreferences(VirtuallyPrivate.NAME, 0);
         if (settings.getBoolean("fresh_install", true)) {
             dbManager.addPermission(new Permission(Permissions.CLIPBOARD));
             dbManager.addPermission(new Permission(Permissions.APP_LIST));
@@ -54,7 +52,6 @@ public class MainActivity extends AppCompatActivity {
             this.dbManager = new DatabaseManager(MainActivity.this);
 
             createAvailablePermissions();
-
             expandableListView = findViewById(R.id.listview);
             Intent mainIntent = new Intent(Intent.ACTION_MAIN, null);
             mainIntent.addCategory(Intent.CATEGORY_LAUNCHER);
@@ -74,13 +71,24 @@ public class MainActivity extends AppCompatActivity {
             // Check that it is only user-installed app.
             if (!((app.flags & ApplicationInfo.FLAG_SYSTEM) != 0))
             {
-                AppInfo info = new AppInfo((String) getPackageManager().getApplicationLabel(app), app);
+                AppInfo info = new AppInfo(Utils.getAppLabel(this, app), app);
                 appsList.put(info, availablePermissions);
                 appArrayInfo.add(info);
             }
         }
         appListAdapter = new AppAdapter(this, appsList,appArrayInfo, dbManager);
         expandableListView.setAdapter(appListAdapter);
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(@NonNull MenuItem item) {
+        switch(item.getItemId()) {
+            case R.id.settings_button:
+                startActivity(new Intent(this, Settings.class));
+                return true;
+            default:
+                return super.onOptionsItemSelected(item);
+        }
     }
 
     @Override
@@ -104,7 +112,6 @@ public class MainActivity extends AppCompatActivity {
                 return true;
             }
         });
-
         return super.onCreateOptionsMenu(menu);
     }
 }

@@ -1,15 +1,5 @@
 package com.virtuallyprivate;
 
-interface Permissions{
-    String CLIPBOARD = "Clipboard";
-    String APP_LIST = "App list";
-    String CAMERA = "Camera";
-    String MICROPHONE = "Microphone";
-    String CONTACTS_LIST = "Contacts list";
-    String CALL_LOG = "Call log";
-    String LOCATION = "Location";
-}
-
 class Permission {
 
     private String name;
