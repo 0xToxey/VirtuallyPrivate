@@ -8,7 +8,6 @@ import android.widget.BaseExpandableListAdapter;
 import android.widget.CheckBox;
 import android.widget.ImageView;
 import android.widget.TextView;
-import android.widget.Toast;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Locale;
@@ -127,10 +126,8 @@ class AppAdapter extends BaseExpandableListAdapter {
                 dbManager.deleteAppRestriction(userRestriction);
             }
 
-            Toast.makeText(
-                m_context,
-                    selectedApp.info.packageName + " blocked permission: " + permission,
-                Toast.LENGTH_SHORT).show();
+            // restarting the app
+            Utils.forceStopApp(m_context, selectedApp.info);
         });
 
         return view;

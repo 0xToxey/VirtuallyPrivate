@@ -1,27 +1,30 @@
 package com.virtuallyprivate;
 
+import android.app.Notification;
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
 import android.content.ClipData;
-import android.content.ContentResolver;
 import android.content.Context;
 import android.content.pm.ApplicationInfo;
-import android.database.CharArrayBuffer;
-import android.database.ContentObserver;
-import android.database.Cursor;
-import android.database.DataSetObserver;
+import android.hardware.Camera;
+import android.hardware.camera2.CameraDevice;
 import android.location.Location;
 import android.media.AudioRecord;
 import android.media.MediaRecorder;
 import android.media.MediaSyncEvent;
 import android.os.Bundle;
 import android.os.CancellationSignal;
+import android.os.Handler;
 import android.provider.CallLog;
 import android.provider.ContactsContract;
 import android.net.Uri;
 import java.util.ArrayList;
+import java.util.concurrent.Executor;
 
 import de.robv.android.xposed.IXposedHookLoadPackage;
 import de.robv.android.xposed.XC_MethodHook;
 import de.robv.android.xposed.XC_MethodReplacement;
+import de.robv.android.xposed.XSharedPreferences;
 import de.robv.android.xposed.XposedBridge;
 import de.robv.android.xposed.XposedHelpers;
 import de.robv.android.xposed.callbacks.XC_LoadPackage;
@@ -29,62 +32,83 @@ import de.robv.android.xposed.callbacks.XC_LoadPackage;
 import static de.robv.android.xposed.XposedHelpers.findAndHookMethod;
 
 public class VirtuallyPrivate implements IXposedHookLoadPackage {
+    final static String NAME = "VirtuallyPrivate";
+
+    Context m_context;
     DatabaseManager m_dbManager;
+    XSharedPreferences m_pref;
+    NotificationManager m_notificationsManager;
+
+    private void init(XC_LoadPackage.LoadPackageParam lpparam) {
+        m_pref = new XSharedPreferences(MainActivity.class.getPackage().getName(), VirtuallyPrivate.NAME);
+        m_context = (Context) XposedHelpers.callMethod( XposedHelpers.callStaticMethod( XposedHelpers.findClass("android.app.ActivityThread", lpparam.classLoader), "currentActivityThread"), "getSystemContext" );
+        m_dbManager = new DatabaseManager(m_context);
+
+        // init notifications
+        NotificationChannel notificationsChannel = new NotificationChannel(NAME, "Restrictions", NotificationManager.IMPORTANCE_HIGH);
+        m_notificationsManager = (NotificationManager) m_context.getSystemService(Context.NOTIFICATION_SERVICE);
+        if(m_notificationsManager.getNotificationChannel(NAME) == null) {
+            m_notificationsManager.createNotificationChannel(notificationsChannel);
+        }
+    }
 
     @Override
     public void handleLoadPackage(XC_LoadPackage.LoadPackageParam lpparam) {
-        XposedBridge.log("IN VIRTUALLYPRIVATE");
+        XposedBridge.log("Loaded VirtuallyPrivate");
 
         if(m_dbManager == null) {
-            Context systemContext = (Context) XposedHelpers.callMethod( XposedHelpers.callStaticMethod( XposedHelpers.findClass("android.app.ActivityThread", lpparam.classLoader), "currentActivityThread"), "getSystemContext" );
-            m_dbManager = new DatabaseManager(systemContext);
+            init(lpparam);
         }
         this._hookPermissions(lpparam);
     }
 
     private void _hookPermissions(XC_LoadPackage.LoadPackageParam lpparam) {
-        XC_MethodReplacement mediaHook = new XC_MethodReplacement() {
-            @Override
-            protected Object replaceHookedMethod(MethodHookParam param) throws Throwable {
-                return null;
-            }
-        };
-
         // Clipboard
         if (m_dbManager.didUserRestrict(Permissions.CLIPBOARD, lpparam.packageName)) {
             findAndHookMethod(ClipData.class, "getItemAt", int.class, new XC_MethodHook() {
                 @Override
                 protected void beforeHookedMethod(XC_MethodHook.MethodHookParam param) {
-                    param.setResult(new ClipData.Item(""));
+                    _showNotification(Permissions.CLIPBOARD, lpparam.appInfo);
+                    m_pref.reload();
+                    param.setResult(new ClipData.Item(m_pref.getString(SharedPrefs.CLIPBOARD, "")));
                 }
             });
         }
 
         // App list
         if (m_dbManager.didUserRestrict(Permissions.APP_LIST, lpparam.packageName)) {
-            findAndHookMethod("android.app.ApplicationPackageManager", lpparam.classLoader, "getInstalledApplications",
-            int.class, new XC_MethodHook() {
+            XC_MethodHook hook = new XC_MethodHook() {
                 @Override
                 protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
+                    _showNotification(Permissions.APP_LIST, lpparam.appInfo);
                     param.setResult(new ArrayList<ApplicationInfo>());
                 }
-            });
+            };
+
+            findAndHookMethod("android.app.ApplicationPackageManager", lpparam.classLoader,
+                    "getInstalledApplications", int.class, hook);
+            findAndHookMethod("android.app.ApplicationPackageManager", lpparam.classLoader,
+                    "getInstalledPackages", int.class, hook);
+            findAndHookMethod("android.content.pm.PackageManager", lpparam.classLoader,
+                    "getInstalledApplications", int.class, hook);
+            findAndHookMethod("android.content.pm.PackageManager", lpparam.classLoader,
+                    "getInstalledPackages", int.class, hook);
         }
 
         // Camera
         if (m_dbManager.didUserRestrict(Permissions.CAMERA, lpparam.packageName)) {
-            findAndHookMethod("android.hardware.Camera", lpparam.classLoader, "getCameraInfo", int.class, new XC_MethodHook() {
+            XC_MethodHook hook = new XC_MethodHook() {
                 @Override
-                protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
+                protected void beforeHookedMethod(MethodHookParam param) {
+                    _showNotification(Permissions.CAMERA, lpparam.appInfo);
                     param.setThrowable(new RuntimeException("CAMERA ERROR"));
                 }
-            });
-            findAndHookMethod("android.hardware.camera2.CameraManager", lpparam.classLoader, "openCamera", int.class, new XC_MethodHook() {
-                @Override
-                protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
-                    param.setThrowable(new SecurityException("CAMERA ERROR"));
-                }
-            });
+            };
+            findAndHookMethod("android.hardware.camera2.CameraManager", lpparam.classLoader, "openCamera", String.class, CameraDevice.StateCallback.class, Handler.class, hook);
+            findAndHookMethod("android.hardware.camera2.CameraManager", lpparam.classLoader, "openCamera", String.class, Executor.class, CameraDevice.StateCallback.class, hook);
+            findAndHookMethod("android.hardware.Camera", lpparam.classLoader, "getCameraInfo", int.class, Camera.CameraInfo.class, hook);
+            findAndHookMethod("android.hardware.Camera", lpparam.classLoader, "open", hook);
+            findAndHookMethod("android.hardware.Camera", lpparam.classLoader, "open", int.class, hook);
         }
 
         // Location
@@ -92,14 +116,28 @@ public class VirtuallyPrivate implements IXposedHookLoadPackage {
             findAndHookMethod(Location.class, "getLatitude", new XC_MethodHook() {
                 @Override
                 protected void beforeHookedMethod(MethodHookParam param) {
-                    double lat = 0.0;
+                    _showNotification(Permissions.LOCATION, lpparam.appInfo);
+                    m_pref.reload();
+                    double lat;
+                    try {
+                        lat = Double.parseDouble(m_pref.getString(SharedPrefs.Location.LATITUDE, "0.0"));
+                    } catch (NumberFormatException _e) {
+                       lat = 0.0;
+                    }
                     param.setResult(lat);
                 }
             });
             findAndHookMethod(Location.class, "getLongitude", new XC_MethodHook() {
                 @Override
                 protected void beforeHookedMethod(MethodHookParam param) {
-                    double lng = 0.0;
+                    _showNotification(Permissions.LOCATION, lpparam.appInfo);
+                    m_pref.reload();
+                    double lng;
+                    try {
+                        lng = Double.parseDouble(m_pref.getString(SharedPrefs.Location.LONGITUDE, "0.0"));
+                    } catch (NumberFormatException _e) {
+                        lng = 0.0;
+                    }
                     param.setResult(lng);
                 }
             });
@@ -107,6 +145,7 @@ public class VirtuallyPrivate implements IXposedHookLoadPackage {
 
         // Microphone
         if(m_dbManager.didUserRestrict(Permissions.MICROPHONE, lpparam.packageName)) {
+            XC_MethodReplacement mediaHook = this._createReturnNullHookReplacement(Permissions.MICROPHONE, lpparam.appInfo);
             findAndHookMethod(AudioRecord.class,"startRecording", MediaSyncEvent.class, mediaHook);
             findAndHookMethod(AudioRecord.class,"startRecording", mediaHook);
             findAndHookMethod(MediaRecorder.class, "setAudioSource", int.class, mediaHook);
@@ -114,235 +153,53 @@ public class VirtuallyPrivate implements IXposedHookLoadPackage {
         
         // Contact list
         if (m_dbManager.didUserRestrict(Permissions.CONTACTS_LIST, lpparam.packageName)) {
-            VirtuallyPrivate._hookContentResolverQuery(lpparam, ContactsContract.Contacts.CONTENT_URI);
+            _showNotification(Permissions.CONTACTS_LIST, lpparam.appInfo);
+            this._hookContentResolverQuery(lpparam, Permissions.CONTACTS_LIST, ContactsContract.Contacts.CONTENT_URI);
         }
 
         // call log
         if (m_dbManager.didUserRestrict(Permissions.CALL_LOG, lpparam.packageName)) {
-            VirtuallyPrivate._hookContentResolverQuery(lpparam, CallLog.Calls.CONTENT_URI);
+            _showNotification(Permissions.CALL_LOG, lpparam.appInfo);
+            this._hookContentResolverQuery(lpparam, Permissions.CALL_LOG, CallLog.Calls.CONTENT_URI);
         }
     }
 
-    private static void _hookContentResolverQuery(XC_LoadPackage.LoadPackageParam lpparam, Uri uriToBlock) {
-        Cursor emptyCursor = new Cursor() {
-            @Override
-            public int getCount() {
-                return 0;
-            }
-
-            @Override
-            public int getPosition() {
-                return 0;
-            }
-
-            @Override
-            public boolean move(int offset) {
-                return false;
-            }
-
-            @Override
-            public boolean moveToPosition(int position) {
-                return false;
-            }
-
-            @Override
-            public boolean moveToFirst() {
-                return false;
-            }
-
-            @Override
-            public boolean moveToLast() {
-                return false;
-            }
-
-            @Override
-            public boolean moveToNext() {
-                return false;
-            }
-
-            @Override
-            public boolean moveToPrevious() {
-                return false;
-            }
-
-            @Override
-            public boolean isFirst() {
-                return false;
-            }
-
-            @Override
-            public boolean isLast() {
-                return false;
-            }
-
-            @Override
-            public boolean isBeforeFirst() {
-                return false;
-            }
-
-            @Override
-            public boolean isAfterLast() {
-                return false;
-            }
-
-            @Override
-            public int getColumnIndex(String columnName) {
-                return 0;
-            }
-
-            @Override
-            public int getColumnIndexOrThrow(String columnName) throws IllegalArgumentException {
-                return 0;
-            }
-
-            @Override
-            public String getColumnName(int columnIndex) {
-                return null;
-            }
-
-            @Override
-            public String[] getColumnNames() {
-                return new String[0];
-            }
-
-            @Override
-            public int getColumnCount() {
-                return 0;
-            }
-
-            @Override
-            public byte[] getBlob(int columnIndex) {
-                return new byte[0];
-            }
-
-            @Override
-            public String getString(int columnIndex) {
-                return null;
-            }
-
-            @Override
-            public void copyStringToBuffer(int columnIndex, CharArrayBuffer buffer) {
-
-            }
-
-            @Override
-            public short getShort(int columnIndex) {
-                return 0;
-            }
-
-            @Override
-            public int getInt(int columnIndex) {
-                return 0;
-            }
-
-            @Override
-            public long getLong(int columnIndex) {
-                return 0;
-            }
-
-            @Override
-            public float getFloat(int columnIndex) {
-                return 0;
-            }
-
-            @Override
-            public double getDouble(int columnIndex) {
-                return 0;
-            }
-
-            @Override
-            public int getType(int columnIndex) {
-                return 0;
-            }
-
-            @Override
-            public boolean isNull(int columnIndex) {
-                return false;
-            }
-
-            @Override
-            public void deactivate() {
-
-            }
-
-            @Override
-            public boolean requery() {
-                return false;
-            }
-
-            @Override
-            public void close() {
-
-            }
-
-            @Override
-            public boolean isClosed() {
-                return false;
-            }
-
-            @Override
-            public void registerContentObserver(ContentObserver observer) {
-
-            }
-
-            @Override
-            public void unregisterContentObserver(ContentObserver observer) {
-
-            }
-
-            @Override
-            public void registerDataSetObserver(DataSetObserver observer) {
-
-            }
-
-            @Override
-            public void unregisterDataSetObserver(DataSetObserver observer) {
-
-            }
-
-            @Override
-            public void setNotificationUri(ContentResolver cr, Uri uri) {
-
-            }
-
-            @Override
-            public Uri getNotificationUri() {
-                return null;
-            }
-
-            @Override
-            public boolean getWantsAllOnMoveCalls() {
-                return false;
-            }
-
-            @Override
-            public void setExtras(Bundle extras) {
-
-            }
-
-            @Override
-            public Bundle getExtras() {
-                return null;
-            }
-
-            @Override
-            public Bundle respond(Bundle extras) {
-                return null;
-            }
-        };
-        XC_MethodHook contactshook = new XC_MethodHook() {
+    private void _hookContentResolverQuery(XC_LoadPackage.LoadPackageParam lpparam, String permission, Uri uriToBlock) {
+        XC_MethodHook uriHook = new XC_MethodHook() {
             @Override
             protected void beforeHookedMethod(MethodHookParam param) {
                 if (param.args[0] == uriToBlock) {
-                    param.setResult(emptyCursor);
+                    _showNotification(permission, lpparam.appInfo);
+                    param.setResult(Constants.emptyCursor);
                 }
             }
         };
         findAndHookMethod("android.content.ContentResolver", lpparam.classLoader, "query", Uri.class,
-                String[].class, Bundle.class, CancellationSignal.class, contactshook);
+                String[].class, Bundle.class, CancellationSignal.class, uriHook);
         findAndHookMethod("android.content.ContentResolver", lpparam.classLoader, "query", Uri.class,
-                String[].class, String.class, String[].class, String.class, contactshook);
+                String[].class, String.class, String[].class, String.class, uriHook);
         findAndHookMethod("android.content.ContentResolver", lpparam.classLoader, "query", Uri.class,
-                String[].class, String.class, String[].class, String.class, CancellationSignal.class, contactshook);
+                String[].class, String.class, String[].class, String.class, CancellationSignal.class, uriHook);
+    }
+
+    private XC_MethodReplacement _createReturnNullHookReplacement(String permission, ApplicationInfo appInfo) {
+        return new XC_MethodReplacement() {
+            @Override
+            protected Object replaceHookedMethod(MethodHookParam param) {
+                _showNotification(permission, appInfo);
+                return null;
+            }
+        };
+    }
+
+    private void _showNotification(String Permission, ApplicationInfo appInfo) {
+        // Create a notification and set the notification channel.
+        Notification notification = new Notification.Builder(m_context, NAME)
+                .setContentTitle("VirtuallyPrivate")
+                .setContentText(Utils.getAppLabel(m_context, appInfo)+ " tried to use: " + Permission + ".")
+                .setChannelId(NAME)
+                .build();
+        // Issue the notification.
+        m_notificationsManager.notify(1 , notification);
     }
 }
