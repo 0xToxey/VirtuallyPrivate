@@ -10,8 +10,8 @@ class Restriction {
         this.permissionId = permissionId;
     }
 
-    public int getId(DatabaseManager dbManager) {
-        return dbManager.getRestrictionPrimaryKey(this.packageId, this.permissionId);
+    public int getId(DatabaseHelper dbHelper) {
+        return dbHelper.getRestrictionPrimaryKey(this.packageId, this.permissionId);
     }
 
     public String getPackageId() { return packageId; }

@@ -1,50 +1,47 @@
 package com.virtuallyprivate;
 
-import android.app.Activity;
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
-import android.view.Menu;
-import android.view.View;
 import android.widget.EditText;
 import android.widget.Toast;
+import androidx.appcompat.app.AppCompatActivity;
 
-public class Settings extends Activity {
+public class Settings extends AppCompatActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_settings);
-
-        initLocationButtons();
+        _init();
     }
 
-    protected void initLocationButtons() {
-        SharedPreferences pref = getApplicationContext().getSharedPreferences(VirtuallyPrivate.NAME, 0);
-        EditText latitudeInput = findViewById(R.id.latitude_input);
-        EditText longitudeInput = findViewById(R.id.longitude_input);
-        EditText clipboardInput = findViewById(R.id.clipboard_input);
+    private void _init() {
+        final SharedPreferences pref = getSharedPreferences(VirtuallyPrivate.NAME, 0);
+
+        // Location
+        final EditText latitudeInput = findViewById(R.id.latitude_input);
+        final EditText longitudeInput = findViewById(R.id.longitude_input);
         latitudeInput.setText(pref.getString(SharedPrefs.Location.LATITUDE, ""));
         longitudeInput.setText(pref.getString(SharedPrefs.Location.LONGITUDE, ""));
+
+        // App List
+        findViewById(R.id.appListChoose).setOnClickListener(view ->
+                startActivity(new Intent(Settings.this, SettingsAppChoose.class))
+        );
+
+        // Clipboard
+        final EditText clipboardInput = findViewById(R.id.clipboard_input);
         clipboardInput.setText(pref.getString(SharedPrefs.CLIPBOARD, ""));
 
-        findViewById(R.id.submitSettingsChangeButtons).setOnClickListener(new View.OnClickListener() {
-            @SuppressWarnings("deprecation")
-            SharedPreferences pref = getApplicationContext().getSharedPreferences(VirtuallyPrivate.NAME, MODE_WORLD_READABLE);
+        findViewById(R.id.submitSettingsChangeButtons).setOnClickListener(view -> {
             SharedPreferences.Editor prefEditor = pref.edit();
-            @Override
-            public void onClick(View view) {
-                prefEditor.putString(SharedPrefs.Location.LATITUDE, latitudeInput.getText().toString());
-                prefEditor.putString(SharedPrefs.Location.LONGITUDE, longitudeInput.getText().toString());
-                prefEditor.putString(SharedPrefs.CLIPBOARD, clipboardInput.getText().toString());
-                prefEditor.apply();
+            prefEditor.putString(SharedPrefs.Location.LATITUDE, latitudeInput.getText().toString());
+            prefEditor.putString(SharedPrefs.Location.LONGITUDE, longitudeInput.getText().toString());
+            prefEditor.putString(SharedPrefs.CLIPBOARD, clipboardInput.getText().toString());
+            prefEditor.apply();
 
-                Toast.makeText(Settings.this, "Settings Changed!", Toast.LENGTH_SHORT).show();
-            }
+            Toast.makeText(Settings.this, R.string.settings_change_string, Toast.LENGTH_SHORT).show();
         });
-    }
-
-    @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        return super.onCreateOptionsMenu(menu);
     }
 }

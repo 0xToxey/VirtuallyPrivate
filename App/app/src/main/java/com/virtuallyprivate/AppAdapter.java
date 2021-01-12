@@ -14,22 +14,22 @@ import java.util.Locale;
 
 class AppAdapter extends BaseExpandableListAdapter {
     private Context m_context;
+    private DatabaseHelper m_dbHelper;
     private ArrayList<AppInfo> appArrayInfo;
     private final ArrayList<AppInfo> allApps; // all apps, don't change this!.
     private HashMap<AppInfo, ArrayList<String>> appList;
-    private DatabaseManager dbManager;
 
-    public AppAdapter(Context context, HashMap<AppInfo, ArrayList<String>> apps, ArrayList<AppInfo> appArrayInfo, DatabaseManager dbManager){
+    public AppAdapter(Context context, HashMap<AppInfo, ArrayList<String>> apps, ArrayList<AppInfo> appArrayInfo, DatabaseHelper dbHelper){
         this.m_context = context;
         this.appList = apps;
         this.allApps = new ArrayList<>(appArrayInfo);
         this.appArrayInfo = appArrayInfo;
-        this.dbManager = dbManager;
+        this.m_dbHelper = dbHelper;
     }
 
     public void filter(String text) {
         text = text.toLowerCase(Locale.getDefault());
-        ArrayList<String> availablePermissions = dbManager.getAvailablePermissions();
+        ArrayList<String> availablePermissions = m_dbHelper.getAvailablePermissions();
 
         appList.clear();
         appArrayInfo.clear();
@@ -41,7 +41,6 @@ class AppAdapter extends BaseExpandableListAdapter {
                 appArrayInfo.add(app);
             }
         }
-
         notifyDataSetChanged();
     }
 
@@ -82,18 +81,13 @@ class AppAdapter extends BaseExpandableListAdapter {
 
     @Override
     public View getGroupView(int i, boolean b, View view, ViewGroup viewGroup) {
-        AppInfo appInfo = getGroup(i);
-        // Check if an existing view is being reused, otherwise inflate the view
-        if(view == null) {
-            LayoutInflater inflater = (LayoutInflater) m_context.getSystemService(m_context.LAYOUT_INFLATER_SERVICE);
-            view = inflater.inflate(R.layout.app_view, null);
-        }
+        final AppInfo appInfo = getGroup(i);
+        if(view == null)
+            view = LayoutInflater.from(m_context).inflate(R.layout.app_view, null);
 
-        // Lookup view for data population
-        ImageView appImg = view.findViewById(R.id.appImg);
-        TextView appName = view.findViewById(R.id.appName);
+        final ImageView appImg = view.findViewById(R.id.appImg);
+        final TextView appName = view.findViewById(R.id.appName);
 
-        // Populate the data into the template view using the data object
         appImg.setImageDrawable(m_context.getPackageManager().getApplicationIcon(appInfo.info));
         appName.setText(appInfo.name);
 
@@ -102,31 +96,26 @@ class AppAdapter extends BaseExpandableListAdapter {
 
     @Override
     public View getChildView(int i, int i1, boolean b, View view, ViewGroup viewGroup) {
-        AppInfo selectedApp = getGroup(i);
-        String permission = getChild(i, i1);
+        final AppInfo selectedApp = getGroup(i);
+        final String permission = getChild(i, i1);
 
-        // Check if an existing view is being reused, otherwise inflate the view
-        if(view == null) {
-            LayoutInflater inflater = (LayoutInflater) m_context.getSystemService(m_context.LAYOUT_INFLATER_SERVICE);
-            view = inflater.inflate(R.layout.app_restrictions, null);
-        }
+        if(view == null)
+            view = LayoutInflater.from(m_context).inflate(R.layout.app_restrictions, null);
 
-        TextView permissionName = view.findViewById(R.id.permissionName);
+        final TextView permissionName = view.findViewById(R.id.permissionName);
+        final CheckBox checkbox = view.findViewById(R.id.restrictionCheckbox);
+
         permissionName.setText(permission);
-        CheckBox checkbox = view.findViewById(R.id.restrictionCheckbox);
-        checkbox.setChecked(this.dbManager.didUserRestrict(permission, selectedApp.info.packageName));
+        checkbox.setChecked(m_dbHelper.didUserRestrict(permission, selectedApp.info.packageName));
 
-        // Set on click listener.
         checkbox.setOnClickListener(v -> {
-            // selected item
-            Restriction userRestriction = new Restriction(selectedApp.info.packageName, dbManager.getPermissionPrimaryKey(permission));
-            if(checkbox.isChecked()) { // by the time the onClick listener is called, the check is reversed.
-                dbManager.addAppRestriction(userRestriction);
+            Restriction userRestriction = new Restriction(selectedApp.info.packageName, m_dbHelper.getPermissionPrimaryKey(permission));
+            if(checkbox.isChecked()) {
+                m_dbHelper.addAppRestriction(userRestriction);
             } else {
-                dbManager.deleteAppRestriction(userRestriction);
+                m_dbHelper.deleteAppRestriction(userRestriction);
             }
 
-            // restarting the app
             Utils.forceStopApp(m_context, selectedApp.info);
         });
 

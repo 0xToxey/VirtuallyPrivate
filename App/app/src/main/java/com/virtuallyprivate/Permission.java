@@ -15,8 +15,8 @@ class Permission {
                 '}';
     }
 
-    public int getId(DatabaseManager dbManager) {
-        return dbManager.getPermissionPrimaryKey(this.name);
+    public int getId(DatabaseHelper dbHelper) {
+        return dbHelper.getPermissionPrimaryKey(this.name);
     }
 
     public String getName() {
