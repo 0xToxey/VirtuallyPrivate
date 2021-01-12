@@ -1,5 +1,6 @@
 package com.virtuallyprivate;
 
+import android.app.AndroidAppHelper;
 import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
@@ -19,6 +20,8 @@ import android.provider.CallLog;
 import android.provider.ContactsContract;
 import android.net.Uri;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.concurrent.Executor;
 
 import de.robv.android.xposed.IXposedHookLoadPackage;
@@ -28,140 +31,88 @@ import de.robv.android.xposed.XSharedPreferences;
 import de.robv.android.xposed.XposedBridge;
 import de.robv.android.xposed.XposedHelpers;
 import de.robv.android.xposed.callbacks.XC_LoadPackage;
-
 import static de.robv.android.xposed.XposedHelpers.findAndHookMethod;
 
 public class VirtuallyPrivate implements IXposedHookLoadPackage {
     final static String NAME = "VirtuallyPrivate";
 
-    Context m_context;
-    DatabaseManager m_dbManager;
-    XSharedPreferences m_pref;
-    NotificationManager m_notificationsManager;
+    static Context m_systemContext;
+    static XSharedPreferences m_pref;
+    static NotificationManager m_notificationsManager;
+    private HashMap<String, Boolean> m_isRestricted;  // for cache
+    private HashMap<String, XC_MethodHook> m_permissionsHooks;
 
-    private void init(XC_LoadPackage.LoadPackageParam lpparam) {
+    private void _initPermissionsHooks(XC_LoadPackage.LoadPackageParam lpparam) {
+        m_permissionsHooks = new HashMap<>();
+        m_permissionsHooks.put(Permissions.CLIPBOARD, new XC_MethodHook() {
+            @Override
+            protected void beforeHookedMethod(XC_MethodHook.MethodHookParam param) {
+                if (_isRestricted(Permissions.CLIPBOARD, lpparam)) {
+                    param.setResult(new ClipData.Item(m_pref.getString(SharedPrefs.CLIPBOARD, "")));
+                }
+            }
+        });
+        m_permissionsHooks.put(Permissions.CAMERA, _createReplacementHook(Permissions.CAMERA, lpparam, null));
+    }
+
+    private void _init(XC_LoadPackage.LoadPackageParam lpparam) {
+        m_isRestricted = new HashMap<>();
         m_pref = new XSharedPreferences(MainActivity.class.getPackage().getName(), VirtuallyPrivate.NAME);
-        m_context = (Context) XposedHelpers.callMethod( XposedHelpers.callStaticMethod( XposedHelpers.findClass("android.app.ActivityThread", lpparam.classLoader), "currentActivityThread"), "getSystemContext" );
-        m_dbManager = new DatabaseManager(m_context);
+        m_systemContext = (Context) XposedHelpers.callMethod(
+                XposedHelpers.callStaticMethod( XposedHelpers.findClass("android.app.ActivityThread",
+                        lpparam.classLoader), "currentActivityThread"), "getSystemContext" );
 
         // init notifications
         NotificationChannel notificationsChannel = new NotificationChannel(NAME, "Restrictions", NotificationManager.IMPORTANCE_HIGH);
-        m_notificationsManager = (NotificationManager) m_context.getSystemService(Context.NOTIFICATION_SERVICE);
-        if(m_notificationsManager.getNotificationChannel(NAME) == null) {
-            m_notificationsManager.createNotificationChannel(notificationsChannel);
-        }
+        m_notificationsManager = (NotificationManager) m_systemContext.getSystemService(Context.NOTIFICATION_SERVICE);
+        m_notificationsManager.createNotificationChannel(notificationsChannel);
+
+        _initPermissionsHooks(lpparam);
     }
 
     @Override
     public void handleLoadPackage(XC_LoadPackage.LoadPackageParam lpparam) {
         XposedBridge.log("Loaded VirtuallyPrivate");
-
-        if(m_dbManager == null) {
-            init(lpparam);
-        }
-        this._hookPermissions(lpparam);
+        _init(lpparam);
+        _hookPermissions(lpparam);
     }
 
     private void _hookPermissions(XC_LoadPackage.LoadPackageParam lpparam) {
         // Clipboard
-        if (m_dbManager.didUserRestrict(Permissions.CLIPBOARD, lpparam.packageName)) {
-            findAndHookMethod(ClipData.class, "getItemAt", int.class, new XC_MethodHook() {
-                @Override
-                protected void beforeHookedMethod(XC_MethodHook.MethodHookParam param) {
-                    _showNotification(Permissions.CLIPBOARD, lpparam.appInfo);
-                    m_pref.reload();
-                    param.setResult(new ClipData.Item(m_pref.getString(SharedPrefs.CLIPBOARD, "")));
-                }
-            });
-        }
+        findAndHookMethod(ClipData.class, "getItemAt", int.class, m_permissionsHooks.get(Permissions.CLIPBOARD));
 
         // App list
-        if (m_dbManager.didUserRestrict(Permissions.APP_LIST, lpparam.packageName)) {
-            XC_MethodHook hook = new XC_MethodHook() {
-                @Override
-                protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
-                    _showNotification(Permissions.APP_LIST, lpparam.appInfo);
-                    param.setResult(new ArrayList<ApplicationInfo>());
-                }
-            };
-
-            findAndHookMethod("android.app.ApplicationPackageManager", lpparam.classLoader,
-                    "getInstalledApplications", int.class, hook);
-            findAndHookMethod("android.app.ApplicationPackageManager", lpparam.classLoader,
-                    "getInstalledPackages", int.class, hook);
-            findAndHookMethod("android.content.pm.PackageManager", lpparam.classLoader,
-                    "getInstalledApplications", int.class, hook);
-            findAndHookMethod("android.content.pm.PackageManager", lpparam.classLoader,
-                    "getInstalledPackages", int.class, hook);
-        }
+        findAndHookMethod("android.app.ApplicationPackageManager", lpparam.classLoader,
+                "getInstalledApplications", int.class, _createAppListHook(lpparam, false));
+        findAndHookMethod("android.app.ApplicationPackageManager", lpparam.classLoader,
+                "getInstalledPackages", int.class, _createAppListHook(lpparam, true));
+        findAndHookMethod("android.content.pm.PackageManager", lpparam.classLoader,
+                "getInstalledApplications", int.class, _createAppListHook(lpparam, false));
+        findAndHookMethod("android.content.pm.PackageManager", lpparam.classLoader,
+                "getInstalledPackages", int.class, _createAppListHook(lpparam, true));
 
         // Camera
-        if (m_dbManager.didUserRestrict(Permissions.CAMERA, lpparam.packageName)) {
-            XC_MethodHook hook = new XC_MethodHook() {
-                @Override
-                protected void beforeHookedMethod(MethodHookParam param) {
-                    _showNotification(Permissions.CAMERA, lpparam.appInfo);
-                    param.setThrowable(new RuntimeException("CAMERA ERROR"));
-                }
-            };
-            findAndHookMethod("android.hardware.camera2.CameraManager", lpparam.classLoader, "openCamera", String.class, CameraDevice.StateCallback.class, Handler.class, hook);
-            findAndHookMethod("android.hardware.camera2.CameraManager", lpparam.classLoader, "openCamera", String.class, Executor.class, CameraDevice.StateCallback.class, hook);
-            findAndHookMethod("android.hardware.Camera", lpparam.classLoader, "getCameraInfo", int.class, Camera.CameraInfo.class, hook);
-            findAndHookMethod("android.hardware.Camera", lpparam.classLoader, "open", hook);
-            findAndHookMethod("android.hardware.Camera", lpparam.classLoader, "open", int.class, hook);
-        }
+        findAndHookMethod("android.hardware.camera2.CameraManager", lpparam.classLoader, "openCamera", String.class, CameraDevice.StateCallback.class, Handler.class, m_permissionsHooks.get(Permissions.CAMERA));
+        findAndHookMethod("android.hardware.camera2.CameraManager", lpparam.classLoader, "openCamera", String.class, Executor.class, CameraDevice.StateCallback.class, m_permissionsHooks.get(Permissions.CAMERA));
+        findAndHookMethod("android.hardware.Camera", lpparam.classLoader, "getCameraInfo", int.class, Camera.CameraInfo.class, m_permissionsHooks.get(Permissions.CAMERA));
+        findAndHookMethod("android.hardware.Camera", lpparam.classLoader, "open", m_permissionsHooks.get(Permissions.CAMERA));
+        findAndHookMethod("android.hardware.Camera", lpparam.classLoader, "open", int.class, m_permissionsHooks.get(Permissions.CAMERA));
 
         // Location
-        if (m_dbManager.didUserRestrict(Permissions.LOCATION, lpparam.packageName)) {
-            findAndHookMethod(Location.class, "getLatitude", new XC_MethodHook() {
-                @Override
-                protected void beforeHookedMethod(MethodHookParam param) {
-                    _showNotification(Permissions.LOCATION, lpparam.appInfo);
-                    m_pref.reload();
-                    double lat;
-                    try {
-                        lat = Double.parseDouble(m_pref.getString(SharedPrefs.Location.LATITUDE, "0.0"));
-                    } catch (NumberFormatException _e) {
-                       lat = 0.0;
-                    }
-                    param.setResult(lat);
-                }
-            });
-            findAndHookMethod(Location.class, "getLongitude", new XC_MethodHook() {
-                @Override
-                protected void beforeHookedMethod(MethodHookParam param) {
-                    _showNotification(Permissions.LOCATION, lpparam.appInfo);
-                    m_pref.reload();
-                    double lng;
-                    try {
-                        lng = Double.parseDouble(m_pref.getString(SharedPrefs.Location.LONGITUDE, "0.0"));
-                    } catch (NumberFormatException _e) {
-                        lng = 0.0;
-                    }
-                    param.setResult(lng);
-                }
-            });
-        }
+        findAndHookMethod(Location.class, "getLatitude", _createLocationHook(lpparam,SharedPrefs.Location.LATITUDE));
+        findAndHookMethod(Location.class, "getLongitude", _createLocationHook(lpparam,SharedPrefs.Location.LONGITUDE));
 
         // Microphone
-        if(m_dbManager.didUserRestrict(Permissions.MICROPHONE, lpparam.packageName)) {
-            XC_MethodReplacement mediaHook = this._createReturnNullHookReplacement(Permissions.MICROPHONE, lpparam.appInfo);
-            findAndHookMethod(AudioRecord.class,"startRecording", MediaSyncEvent.class, mediaHook);
-            findAndHookMethod(AudioRecord.class,"startRecording", mediaHook);
-            findAndHookMethod(MediaRecorder.class, "setAudioSource", int.class, mediaHook);
-        }
+        XC_MethodHook mediaHook = this._createReplacementHook(Permissions.MICROPHONE, lpparam, null);
+        findAndHookMethod(AudioRecord.class,"startRecording", MediaSyncEvent.class, mediaHook);
+        findAndHookMethod(AudioRecord.class,"startRecording", mediaHook);
+        findAndHookMethod(MediaRecorder.class, "setAudioSource", int.class, mediaHook);
         
         // Contact list
-        if (m_dbManager.didUserRestrict(Permissions.CONTACTS_LIST, lpparam.packageName)) {
-            _showNotification(Permissions.CONTACTS_LIST, lpparam.appInfo);
-            this._hookContentResolverQuery(lpparam, Permissions.CONTACTS_LIST, ContactsContract.Contacts.CONTENT_URI);
-        }
+        this._hookContentResolverQuery(lpparam, Permissions.CONTACTS_LIST, ContactsContract.Contacts.CONTENT_URI);
 
         // call log
-        if (m_dbManager.didUserRestrict(Permissions.CALL_LOG, lpparam.packageName)) {
-            _showNotification(Permissions.CALL_LOG, lpparam.appInfo);
-            this._hookContentResolverQuery(lpparam, Permissions.CALL_LOG, CallLog.Calls.CONTENT_URI);
-        }
+        this._hookContentResolverQuery(lpparam, Permissions.CALL_LOG, CallLog.Calls.CONTENT_URI);
     }
 
     private void _hookContentResolverQuery(XC_LoadPackage.LoadPackageParam lpparam, String permission, Uri uriToBlock) {
@@ -169,8 +120,9 @@ public class VirtuallyPrivate implements IXposedHookLoadPackage {
             @Override
             protected void beforeHookedMethod(MethodHookParam param) {
                 if (param.args[0] == uriToBlock) {
-                    _showNotification(permission, lpparam.appInfo);
-                    param.setResult(Constants.emptyCursor);
+                    if (_isRestricted(permission, lpparam)) {
+                        param.setResult(Constants.emptyCursor);
+                    }
                 }
             }
         };
@@ -182,21 +134,72 @@ public class VirtuallyPrivate implements IXposedHookLoadPackage {
                 String[].class, String.class, String[].class, String.class, CancellationSignal.class, uriHook);
     }
 
-    private XC_MethodReplacement _createReturnNullHookReplacement(String permission, ApplicationInfo appInfo) {
+    private XC_MethodReplacement _createReplacementHook(String permission, XC_LoadPackage.LoadPackageParam lpparam, Object replacementValue) {
         return new XC_MethodReplacement() {
             @Override
-            protected Object replaceHookedMethod(MethodHookParam param) {
-                _showNotification(permission, appInfo);
-                return null;
+            protected Object replaceHookedMethod(MethodHookParam param) throws Throwable {
+                if (_isRestricted(permission, lpparam)) {
+                    return replacementValue;
+                }
+                return XposedBridge.invokeOriginalMethod(param.method, param.thisObject, param.args);
             }
         };
     }
 
+    private XC_MethodHook _createAppListHook(XC_LoadPackage.LoadPackageParam lpparam, boolean packageInfo) {
+        return new XC_MethodHook() {
+            @Override
+            protected void beforeHookedMethod(de.robv.android.xposed.XC_MethodHook.MethodHookParam param) throws Throwable {
+                Context context = AndroidAppHelper.currentApplication();
+                if (_isRestricted(Permissions.APP_LIST, lpparam) ) {
+                    ArrayList<Object> apps = new ArrayList<>();
+                    for (String packageName : m_pref.getStringSet(SharedPrefs.APP_LIST, new HashSet<>())) {
+                        if (packageInfo) {
+                            apps.add(context.getPackageManager().getPackageInfo(packageName, 0));
+                        } else {
+                            apps.add(context.getPackageManager().getApplicationInfo(packageName, 0));
+                        }
+                    }
+                    param.setResult(apps);
+                }
+            }
+        };
+    };
+
+    private XC_MethodHook _createLocationHook(XC_LoadPackage.LoadPackageParam lpparam, String sharePrefsKey) {
+        return new XC_MethodHook() {
+            @Override
+            protected void beforeHookedMethod(MethodHookParam param) {
+                if (_isRestricted(Permissions.LOCATION, lpparam) ) {
+                    double location;
+                    try {
+                        location = Double.parseDouble(m_pref.getString(sharePrefsKey, "0.0"));
+                    } catch (NumberFormatException _e) {
+                        location = 0.0;
+                    }
+                    param.setResult(location);
+                }
+            }
+        };
+    }
+
+    private boolean _isRestricted(String permission, XC_LoadPackage.LoadPackageParam lpparam) {
+        if (!m_isRestricted.containsKey(permission)) {
+            m_isRestricted.put(permission, DatabaseHelper.didUserRestrict(AndroidAppHelper.currentApplication(), permission, lpparam.packageName));
+        }
+        if (m_isRestricted.get(permission)) {
+            _showNotification(permission, lpparam.appInfo);
+            m_pref.reload();
+            return true;
+        }
+        return false;
+    }
+
     private void _showNotification(String Permission, ApplicationInfo appInfo) {
         // Create a notification and set the notification channel.
-        Notification notification = new Notification.Builder(m_context, NAME)
-                .setContentTitle("VirtuallyPrivate")
-                .setContentText(Utils.getAppLabel(m_context, appInfo)+ " tried to use: " + Permission + ".")
+        Notification notification = new Notification.Builder(m_systemContext, NAME)
+                .setContentTitle(NAME)
+                .setContentText(Utils.getAppLabel(m_systemContext, appInfo)+ " tried to use: " + Permission + ".")
                 .setChannelId(NAME)
                 .build();
         // Issue the notification.

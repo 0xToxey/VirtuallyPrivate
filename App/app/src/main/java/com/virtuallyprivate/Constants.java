@@ -25,9 +25,10 @@ interface SharedPrefs{
         String LONGITUDE = "longitude";
     }
     String CLIPBOARD = "clipboard";
+    String APP_LIST = "appList";
 }
 
-public interface Constants {
+interface Constants {
     Cursor emptyCursor = new Cursor() {
         @Override
         public int getCount() {
