@@ -5,6 +5,7 @@ import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.content.ClipData;
+import android.content.ContentResolver;
 import android.content.Context;
 import android.content.pm.ApplicationInfo;
 import android.hardware.Camera;
@@ -19,11 +20,14 @@ import android.os.Handler;
 import android.provider.CallLog;
 import android.provider.ContactsContract;
 import android.net.Uri;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Set;
 import java.util.concurrent.Executor;
-
 import de.robv.android.xposed.IXposedHookLoadPackage;
 import de.robv.android.xposed.XC_MethodHook;
 import de.robv.android.xposed.XC_MethodReplacement;
@@ -72,6 +76,10 @@ public class VirtuallyPrivate implements IXposedHookLoadPackage {
 
     @Override
     public void handleLoadPackage(XC_LoadPackage.LoadPackageParam lpparam) {
+        if(lpparam.packageName.equals(BuildConfig.APPLICATION_ID)) {
+            return;
+        }
+
         XposedBridge.log("Loaded VirtuallyPrivate");
         _init(lpparam);
         _hookPermissions(lpparam);
@@ -109,6 +117,10 @@ public class VirtuallyPrivate implements IXposedHookLoadPackage {
         findAndHookMethod(MediaRecorder.class, "setAudioSource", int.class, mediaHook);
         
         // Contact list
+        this._hookContentResolverQuery(lpparam, Permissions.CONTACTS_LIST, ContactsContract.Data.CONTENT_URI);
+        this._hookContentResolverQuery(lpparam, Permissions.CONTACTS_LIST, ContactsContract.DeletedContacts.CONTENT_URI);
+        this._hookContentResolverQuery(lpparam, Permissions.CONTACTS_LIST, ContactsContract.CommonDataKinds.Contactables.CONTENT_URI);
+        this._hookContentResolverQuery(lpparam, Permissions.CONTACTS_LIST, ContactsContract.RawContacts.CONTENT_URI);
         this._hookContentResolverQuery(lpparam, Permissions.CONTACTS_LIST, ContactsContract.Contacts.CONTENT_URI);
 
         // call log
@@ -116,24 +128,86 @@ public class VirtuallyPrivate implements IXposedHookLoadPackage {
     }
 
     private void _hookContentResolverQuery(XC_LoadPackage.LoadPackageParam lpparam, String permission, Uri uriToBlock) {
-        XC_MethodHook uriHook = new XC_MethodHook() {
+        XC_MethodHook contentResolverHook = new XC_MethodHook() {
             @Override
-            protected void beforeHookedMethod(MethodHookParam param) {
-                if (param.args[0] == uriToBlock) {
-                    if (_isRestricted(permission, lpparam)) {
+            protected void beforeHookedMethod(MethodHookParam param)  {
+                final Uri hookedUri = (Uri)param.args[0];
+                if (hookedUri.getAuthority().equals(uriToBlock.getAuthority()) && hookedUri.getPath().equals(uriToBlock.getPath())) {
+                    if (!_isRestricted(permission, lpparam)) {
+                        return;
+                    }
+                    if (Permissions.CONTACTS_LIST.equals(permission)) {
+                        _contactsBeforeHookedMethod(param, hookedUri, m_pref.getStringSet(SharedPrefs.CONTACTS, new HashSet<>()));
+                    } else {
                         param.setResult(Constants.emptyCursor);
                     }
                 }
             }
         };
         findAndHookMethod("android.content.ContentResolver", lpparam.classLoader, "query", Uri.class,
-                String[].class, Bundle.class, CancellationSignal.class, uriHook);
+                String[].class, String.class, String[].class, String.class, contentResolverHook);
         findAndHookMethod("android.content.ContentResolver", lpparam.classLoader, "query", Uri.class,
-                String[].class, String.class, String[].class, String.class, uriHook);
+                String[].class, Bundle.class, CancellationSignal.class, contentResolverHook);
         findAndHookMethod("android.content.ContentResolver", lpparam.classLoader, "query", Uri.class,
-                String[].class, String.class, String[].class, String.class, CancellationSignal.class, uriHook);
+                String[].class, String.class, String[].class, String.class, CancellationSignal.class, contentResolverHook);
     }
 
+    private void _contactsBeforeHookedMethod(XC_MethodHook.MethodHookParam param, Uri hookedUri, Set<String> contactIdsSet) {
+        if(contactIdsSet.isEmpty()) {
+            param.setResult(Constants.emptyCursor);
+            return;
+        }
+
+        // In case of ContactsContract.Data.CONTENT_URI or ContactsContract.RawContacts.CONTENT_URI contactIdColumnName should be 'contact_id'
+        // else (ContactsContract.Contacts.CONTENT_URI), should be '_id'
+        final String contactIdColumnName = hookedUri.getPath().equals(ContactsContract.Contacts.CONTENT_URI.getPath()) ?
+                ContactsContract.Contacts._ID : ContactsContract.Data.CONTACT_ID;
+
+        // adding contact id projection
+        ArrayList<String> projection = new ArrayList<>(Arrays.asList((String[]) param.args[1]));
+        if(!projection.contains(contactIdColumnName)) {
+            projection.add(contactIdColumnName);
+        }
+
+        // params are uri hook(0), projection(1), selection(2), selection args(3)
+        // or uri hook(0), projection(1), bundle(2)
+        String originalSelection;
+        String contactIdsSelection = contactIdColumnName + " IN (" + String.join(",", contactIdsSet) + ")";
+        String[] selectionArgs;
+        if (param.args[2] instanceof Bundle) {
+            Bundle arguments = ((Bundle) param.args[2]);
+            originalSelection = arguments.getString(ContentResolver.QUERY_ARG_SQL_SELECTION, "");
+            selectionArgs = arguments.getStringArray(ContentResolver.QUERY_ARG_SQL_SELECTION_ARGS);
+        } else {
+            originalSelection = (String) param.args[2];
+            selectionArgs = (String[]) param.args[3];
+        }
+
+        if(originalSelection != null) {
+            //  if already selecting only the wanted contact ids, returning to the original function
+            if (originalSelection.startsWith(contactIdsSelection)) {
+                return;
+            }
+            contactIdsSelection += " AND (" + originalSelection + ")";
+        }
+        Object[] queryParams = new Object[]{
+                hookedUri, projection.toArray(new String[0]),
+                contactIdsSelection, selectionArgs, null
+        };
+        final Method queryMethod = XposedHelpers.findMethodExact(ContentResolver.class, "query", Uri.class,
+                String[].class, String.class, String[].class, String.class);
+        try {
+            param.setResult(XposedBridge.invokeOriginalMethod(
+                    queryMethod, AndroidAppHelper.currentApplication().getContentResolver(), queryParams));
+        } catch (IllegalAccessException | InvocationTargetException e) {
+            param.setResult(Constants.emptyCursor);
+        }
+    }
+
+     /*
+     * function returns a hook used for replacement, it sets the param result
+     * to given replacementValue if the permission is restricted
+     * */
     private XC_MethodReplacement _createReplacementHook(String permission, XC_LoadPackage.LoadPackageParam lpparam, Object replacementValue) {
         return new XC_MethodReplacement() {
             @Override
@@ -146,6 +220,9 @@ public class VirtuallyPrivate implements IXposedHookLoadPackage {
         };
     }
 
+    /* function returns a hook used for app list, it sets the param result
+     * to the shared prefs app list
+     * */
     private XC_MethodHook _createAppListHook(XC_LoadPackage.LoadPackageParam lpparam, boolean packageInfo) {
         return new XC_MethodHook() {
             @Override
@@ -166,6 +243,9 @@ public class VirtuallyPrivate implements IXposedHookLoadPackage {
         };
     };
 
+    /* function returns a hook used for location, it sets the param result to 0.0 if
+     * no sharedPrefs value is set
+     * */
     private XC_MethodHook _createLocationHook(XC_LoadPackage.LoadPackageParam lpparam, String sharePrefsKey) {
         return new XC_MethodHook() {
             @Override
@@ -183,6 +263,7 @@ public class VirtuallyPrivate implements IXposedHookLoadPackage {
         };
     }
 
+    /* function checks if the permission is restricted, if so it shows notification and reloads shared prefs */
     private boolean _isRestricted(String permission, XC_LoadPackage.LoadPackageParam lpparam) {
         if (!m_isRestricted.containsKey(permission)) {
             m_isRestricted.put(permission, DatabaseHelper.didUserRestrict(AndroidAppHelper.currentApplication(), permission, lpparam.packageName));
@@ -195,14 +276,16 @@ public class VirtuallyPrivate implements IXposedHookLoadPackage {
         return false;
     }
 
+    /* function shows a notification for a used permission */
     private void _showNotification(String Permission, ApplicationInfo appInfo) {
         // Create a notification and set the notification channel.
         Notification notification = new Notification.Builder(m_systemContext, NAME)
                 .setContentTitle(NAME)
-                .setContentText(Utils.getAppLabel(m_systemContext, appInfo)+ " tried to use: " + Permission + ".")
+                .setContentText(Utils.getAppLabel(m_systemContext, appInfo) + " tried to use: " + Permission + ".")
                 .setChannelId(NAME)
+                .setOnlyAlertOnce(true)
                 .build();
         // Issue the notification.
-        m_notificationsManager.notify(1 , notification);
+        m_notificationsManager.notify(1, notification);
     }
 }

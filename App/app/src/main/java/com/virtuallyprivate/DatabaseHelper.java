@@ -56,8 +56,7 @@ class DatabaseHelper {
         final Cursor cursor = context.getContentResolver().query(
                 uri,
                 projection,
-                selectionQuery,null,null
-        );
+                selectionQuery,null,null);
 
         while(cursor != null && cursor.moveToNext()) {
             final int primaryKey = cursor.getInt(
@@ -113,16 +112,18 @@ class DatabaseHelper {
         final String[] projection = {
                 COLUMN_ID
         };
-        final Cursor cursor = context.getContentResolver().query(
-                DataProvider.RESTRICTIONS_URI,
-                projection,
-                selectionQuery,null," LIMIT 1"
-        );
 
+        Cursor cursor = context.getContentResolver().query(
+                    DataProvider.RESTRICTIONS_URI,
+                    projection,
+                    selectionQuery,null," LIMIT 1"
+            );
         while(cursor != null && cursor.moveToNext()) {
             didRestrict = true;
-            cursor.close();
             break;
+        }
+        if ( cursor != null ) {
+            cursor.close();
         }
         return didRestrict;
     }
