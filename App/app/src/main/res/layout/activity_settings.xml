@@ -90,6 +90,24 @@
                 android:backgroundTint="@color/BlockApp"/>
         </LinearLayout>
 
+        // Contacts List
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_margin="3dp"
+            android:orientation="vertical">
+
+            <Button
+                android:id="@+id/contactsListChoose"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:text="Contacts List"
+                android:textStyle="bold"
+                android:textSize="25sp"
+                android:textColor="@color/TextApp"
+                android:backgroundTint="@color/BlockApp"/>
+        </LinearLayout>
+
         <Button
             android:id="@+id/submitSettingsChangeButtons"
             android:layout_margin="10dp"
@@ -97,7 +115,6 @@
             android:layout_height="wrap_content"
             android:ems="10"
             android:text="Save Changes"
-            android:backgroundTint="@color/BlockApp"
-            />
+            android:backgroundTint="@color/BlockApp" />
     </LinearLayout>
 </LinearLayout>

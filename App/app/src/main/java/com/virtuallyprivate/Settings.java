@@ -30,6 +30,11 @@ public class Settings extends AppCompatActivity {
                 startActivity(new Intent(Settings.this, SettingsAppChoose.class))
         );
 
+        // Contacts List
+        findViewById(R.id.contactsListChoose).setOnClickListener(view ->
+                startActivity(new Intent(Settings.this, SettingsContactsChoose.class))
+        );
+
         // Clipboard
         final EditText clipboardInput = findViewById(R.id.clipboard_input);
         clipboardInput.setText(pref.getString(SharedPrefs.CLIPBOARD, ""));

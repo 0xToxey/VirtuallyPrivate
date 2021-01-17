@@ -26,6 +26,7 @@ interface SharedPrefs{
     }
     String CLIPBOARD = "clipboard";
     String APP_LIST = "appList";
+    String CONTACTS = "contacts";
 }
 
 interface Constants {
