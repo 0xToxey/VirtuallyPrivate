@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    android:id="@+id/appView"
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="350sp"
+    android:layout_height="wrap_content"
+    android:orientation="horizontal"
+    android:layout_gravity="center_horizontal"
+    android:gravity="center_vertical"
+    android:padding="16dp">
+
+    <TextView
+        android:id="@+id/permissionName"
+        android:autoSizeTextType="uniform"
+        android:autoSizeMaxTextSize="30sp"
+        android:layout_width="225sp"
+        android:layout_height="50sp"
+        android:layout_marginStart="20dp"
+        android:textColor="@color/TextApp"
+        android:layout_gravity="center"
+        android:text="Permission"/>
+
+    <CheckBox
+        android:id="@+id/restrictionCheckbox"
+        android:layout_width="60sp"
+        android:layout_height="60sp"
+        android:layout_marginStart="30sp"
+        android:layout_gravity="center"
+        android:layout_marginEnd="15sp"/>
+
+</LinearLayout>
