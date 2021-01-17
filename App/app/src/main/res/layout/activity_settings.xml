@@ -1,0 +1,120 @@
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:background="@color/backgroundApp"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <LinearLayout
+        android:id="@+id/settings"
+        android:orientation="vertical"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        // Location
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_margin="3dp"
+            android:orientation="vertical">
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Location"
+                android:textStyle="bold"
+                android:textSize="25sp"
+                android:textColor="@color/TextApp"
+                android:background="@color/BlockApp"
+                android:gravity="center"/>
+            <EditText
+                android:id="@+id/latitude_input"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="Latitude (Example: 82.8628)"
+                android:textColor="@color/TextApp"
+                android:padding="10dp"
+                android:background="@color/BlockApp"
+                android:textColorHint="@color/TextApp" />
+
+            <EditText
+                android:id="@+id/longitude_input"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textColor="@color/TextApp"
+                android:textColorHint="@color/TextApp"
+                android:padding="10dp"
+                android:background="@color/BlockApp"                android:hint="Longitude (Example: 135.0000)" />
+        </LinearLayout>
+
+        // Clipboard
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_margin="3dp"
+            android:orientation="vertical">
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Clipboard"
+                android:textStyle="bold"
+                android:textSize="25sp"
+                android:textColor="@color/TextApp"
+                android:background="@color/BlockApp"
+                android:gravity="center"/>
+            <EditText
+                android:id="@+id/clipboard_input"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textColor="@color/TextApp"
+                android:hint="Data"
+                android:padding="10dp"
+                android:background="@color/BlockApp"
+                android:textColorHint="@color/TextApp" />
+        </LinearLayout>
+
+        // App List
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_margin="3dp"
+            android:orientation="vertical">
+
+            <Button
+                android:id="@+id/appListChoose"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:text="App List"
+                android:textStyle="bold"
+                android:textSize="25sp"
+                android:textColor="@color/TextApp"
+                android:backgroundTint="@color/BlockApp"/>
+        </LinearLayout>
+
+        // Contacts List
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_margin="3dp"
+            android:orientation="vertical">
+
+            <Button
+                android:id="@+id/contactsListChoose"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:text="Contacts List"
+                android:textStyle="bold"
+                android:textSize="25sp"
+                android:textColor="@color/TextApp"
+                android:backgroundTint="@color/BlockApp"/>
+        </LinearLayout>
+
+        <Button
+            android:id="@+id/submitSettingsChangeButtons"
+            android:layout_margin="10dp"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:ems="10"
+            android:text="Save Changes"
+            android:backgroundTint="@color/BlockApp" />
+    </LinearLayout>
+</LinearLayout>

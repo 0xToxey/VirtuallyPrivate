@@ -1,0 +1,9 @@
+<resources>
+    <string name="app_name">VirtuallyPrivate</string>
+    <string name="title_activity_settings">Settings</string>
+    <string name="title_activity_settingsAppChoose">Choose Apps</string>
+    <string name="title_activity_settingsContactsChoose">Choose Contacts</string>
+    <string name="settings_change_string">Settings Changed!</string>
+    <string name="vxposed_package">io.va.exposed</string>
+    <string name="android_package">android</string>
+</resources>

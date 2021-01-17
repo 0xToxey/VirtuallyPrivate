@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout android:id="@+id/appView"
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:gravity="center_horizontal"
+    android:padding="5dp"
+    android:layout_gravity="center_horizontal">
+
+    <LinearLayout
+        android:layout_width="350sp"
+        android:layout_height="70sp"
+        android:layout_gravity="center_horizontal"
+        android:background="@drawable/appblock_background">
+
+        <ImageView
+            android:id="@+id/appImg"
+            android:layout_width="50sp"
+            android:layout_height="50sp"
+            android:layout_marginStart="18sp"
+            android:layout_gravity="center"
+            android:layout_marginEnd="15sp" />
+
+        <TextView
+            android:id="@+id/appName"
+            android:layout_width="200sp"
+            android:layout_height="50sp"
+            android:autoSizeMaxTextSize="30sp"
+            android:layout_gravity="center"
+            android:gravity="center"
+            android:autoSizeTextType="uniform"
+            android:text="App Name"
+            android:textColor="@color/TextApp" />
+
+        <CheckBox
+            android:id="@+id/appChooseCheckbox"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:visibility="invisible"
+            />
+    </LinearLayout>
+</LinearLayout>
